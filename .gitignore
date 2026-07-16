@@ -1,0 +1,16 @@
+# === Documents de référence sous droit d'auteur (NON versionnés) ===
+# Manuels de vol (WT9, Piper) et cartes VAC du SIA eAIP.
+*.pdf
+
+# Captures des tableaux de performances (extraits de manuels constructeurs).
+# Toutes les images à la racine sont des captures ; les photos d'avions de
+# l'appli sont dans "images avions/" et restent versionnées.
+/*.png
+
+# === Config locale Claude Code ===
+.claude/settings.local.json
+
+# === Divers OS / éditeurs ===
+Thumbs.db
+Desktop.ini
+.DS_Store
