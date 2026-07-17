@@ -17,20 +17,20 @@ Conçu comme une **aide personnelle à la préparation des vols**.
 
 Aucune étape de build.
 
-- **Le plus simple :** ouvrir `Calculateur_Performances_WT9.html` directement
-  dans un navigateur (double-clic).
+- **Le plus simple :** ouvrir `index.html` directement dans un navigateur
+  (double-clic).
 - **Ou** servir le dossier en statique (plus fiable pour les chemins relatifs
   des images) :
   ```
   python -m http.server 8744
   ```
-  puis ouvrir <http://localhost:8744/Calculateur_Performances_WT9.html>.
+  puis ouvrir <http://localhost:8744/>.
 
 ## Structure
 
 | Fichier | Rôle |
 | --- | --- |
-| `Calculateur_Performances_WT9.html` | Toute la logique et l'interface. |
+| `index.html` | Toute la logique et l'interface. Nommé `index.html` pour être servi par défaut par GitHub Pages. |
 | `db-flotte.js` | Les données : perfs avions, aérodromes, icônes SVG. Chargé via `<script src>`, doit rester à côté du HTML. |
 | `images avions/*.png` | Photos des avions affichées dans le sélecteur. |
 | `CLAUDE.md` | Documentation d'architecture (pour Claude Code et les contributeurs). |

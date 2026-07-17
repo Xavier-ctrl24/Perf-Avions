@@ -2,7 +2,7 @@
    BASE DE DONNÉES — Calculateur de performances, Aéroclub de Haguenau
    =====================================================================
 
-   Ce fichier est chargé par Calculateur_Performances_WT9.html via
+   Ce fichier est chargé par index.html via
    <script src="db-flotte.js"> et doit rester DANS LE MÊME DOSSIER que
    le fichier HTML. C'est un fichier .js (et non .json) volontairement :
    un vrai .json chargé par fetch() est bloqué par le navigateur quand

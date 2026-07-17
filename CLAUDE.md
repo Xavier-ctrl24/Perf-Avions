@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A vanilla HTML/CSS/JS tool in two files: `Calculateur_Performances_WT9.html` (all logic and UI) plus `db-flotte.js` (the data: aircraft performance, airfields, SVG icons — loaded via `<script src>`, must sit next to the HTML). It calculates takeoff/landing performance (ground roll, distance to clear 15 m, margin vs. runway length) for the aircraft fleet of the Aéroclub de Haguenau, for personal flight planning by the pilot. There is no build system, package manager, or test suite; it's meant to be opened directly in a browser (double-click) or served from a static file server.
+A vanilla HTML/CSS/JS tool in two files: `index.html` (all logic and UI) plus `db-flotte.js` (the data: aircraft performance, airfields, SVG icons — loaded via `<script src>`, must sit next to the HTML). It calculates takeoff/landing performance (ground roll, distance to clear 15 m, margin vs. runway length) for the aircraft fleet of the Aéroclub de Haguenau, for personal flight planning by the pilot. There is no build system, package manager, or test suite; it's meant to be opened directly in a browser (double-click) or served from a static file server.
 
 The rest of the folder is reference material the tool's data was manually transcribed from — aircraft flight manuals (PDF), VAC chart PDFs (`AD-2.*.pdf`, from the SIA eAIP) for LFSH and the surrounding airfields in the database, cropped performance-table screenshots, and aircraft photo thumbnails in `images avions/`. None of it is consumed programmatically at runtime; treat it as source documentation, not app assets, except for the `images avions/*.png` files which the HTML does load directly.
 
@@ -12,8 +12,10 @@ The rest of the folder is reference material the tool's data was manually transc
 
 No build step.
 
-- Open `Calculateur_Performances_WT9.html` directly in a browser (`file://`).
-- Or serve the folder statically, e.g. `python -m http.server 8744`, then browse to `http://localhost:8744/Calculateur_Performances_WT9.html` — more reliable for the relative `images avions/...` paths and needed if testing in a sandboxed browser tool that blocks `file://` navigation.
+- Open `index.html` directly in a browser (`file://`).
+- Or serve the folder statically, e.g. `python -m http.server 8744`, then browse to `http://localhost:8744/` — more reliable for the relative `images avions/...` paths and needed if testing in a sandboxed browser tool that blocks `file://` navigation.
+
+The entry point is named `index.html` (rather than something descriptive) because the repo is published via GitHub Pages, which serves `index.html` by default at the site root. Don't rename it.
 
 There is no linter or automated test suite. Verify changes by opening the file in a browser, exercising the UI (change aircraft/airport/weather inputs, check the recomputed results and the runway SVG), and checking the browser console for errors.
 
