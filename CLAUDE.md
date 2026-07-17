@@ -15,7 +15,7 @@ No build step.
 - Open `index.html` directly in a browser (`file://`).
 - Or serve the folder statically, e.g. `python -m http.server 8744`, then browse to `http://localhost:8744/` — more reliable for the relative `images avions/...` paths and needed if testing in a sandboxed browser tool that blocks `file://` navigation.
 
-The entry point is named `index.html` (rather than something descriptive) because the repo is published via GitHub Pages, which serves `index.html` by default at the site root. Don't rename it.
+The entry point is named `index.html` (rather than something descriptive) because the repo is deployed on Vercel, which serves `index.html` by default at the site root. Don't rename it. (GitHub Pages is not enabled on the repo; it would have the same requirement if it ever were.)
 
 There is no linter or automated test suite. Verify changes by opening the file in a browser, exercising the UI (change aircraft/airport/weather inputs, check the recomputed results and the runway SVG), and checking the browser console for errors.
 
@@ -50,6 +50,6 @@ The owner is a pilot and a nurse, not a professional developer, and is learning 
 
 The tool itself works; what remains is the rest of the chain.
 
-1. ~~Publish on GitHub~~ — done, <https://github.com/Xavier-ctrl24/Perf-Avions>, served by GitHub Pages from `index.html`.
-2. **Deploy on Vercel** — not started.
+1. ~~Publish on GitHub~~ — done, <https://github.com/Xavier-ctrl24/Perf-Avions>.
+2. ~~Deploy on Vercel~~ — done, <https://perf-avions-3skt.vercel.app/>, auto-redeployed on every push to `main`. GitHub Pages is *not* enabled; Vercel is the only thing serving this site.
 3. **Smartphone app** — not started. Intended direction: make the page installable (PWA) rather than rebuild it natively, since it's already a self-contained static page.

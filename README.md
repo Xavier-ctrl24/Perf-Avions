@@ -7,6 +7,9 @@ par rapport à la longueur de piste disponible.
 
 Conçu comme une **aide personnelle à la préparation des vols**.
 
+**En ligne :** <https://perf-avions-3skt.vercel.app/> (déployé automatiquement par
+Vercel à chaque push sur `main`).
+
 > ⚠️ **Avertissement.** Cet outil n'est ni certifié ni officiel. Les résultats
 > reposent sur une transcription manuelle des manuels de vol et sur un modèle de
 > correction simplifié (voir le panneau « Méthode de calcul » dans l'appli).
@@ -30,7 +33,7 @@ Aucune étape de build.
 
 | Fichier | Rôle |
 | --- | --- |
-| `index.html` | Toute la logique et l'interface. Nommé `index.html` pour être servi par défaut par GitHub Pages. |
+| `index.html` | Toute la logique et l'interface. Nommé `index.html` pour être servi par défaut à la racine du site par Vercel. |
 | `db-flotte.js` | Les données : perfs avions, aérodromes, icônes SVG. Chargé via `<script src>`, doit rester à côté du HTML. |
 | `images avions/*.png` | Photos des avions affichées dans le sélecteur. |
 | `CLAUDE.md` | Documentation d'architecture (pour Claude Code et les contributeurs). |
