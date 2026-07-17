@@ -118,6 +118,12 @@
 
   .aircraft-note{font-size:.75rem;color:var(--amber);background:var(--amber-bg);border-radius:6px;padding:6px 10px;margin-top:8px;}
 
+  .altiport-banner{margin-top:14px;background:var(--amber-bg);border:1px solid var(--amber);
+    border-left-width:5px;border-radius:8px;padding:10px 14px;color:var(--amber);font-size:.8rem;line-height:1.5;}
+  .altiport-banner .altiport-title{font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:.78rem;}
+  .altiport-banner .altiport-slope{font-weight:700;}
+  .altiport-banner ul{margin:6px 0 0;padding-left:18px;}
+
   .wind-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
   .wind-metric{background:var(--slate-50);border:1px solid var(--slate-200);border-radius:8px;padding:14px 16px;}
   .wind-metric .label{font-size:.75rem;color:var(--slate-500);text-transform:uppercase;letter-spacing:.4px;}
@@ -212,6 +218,8 @@
         <div class="hint" id="runwaySuggestion"></div>
       </div>
     </div>
+
+    <div class="altiport-banner" id="altiportBanner" style="display:none;"></div>
 
     <div class="grid" id="customFields" style="display:none;margin-top:14px;">
       <div class="field">
@@ -606,15 +614,42 @@ function correctionFactor(ac, elevFt, qnh, tempC, headwind){
   const reference = conditionFactor(ac.ref.elevFt, 1013.25, ac.ref.tempC, refHeadwind);
   return actual / reference;
 }
+/* Slope correction, applied to the GROUND ROLL only (the airborne segment of the 15 m
+   distance is unaffected by the gradient of the asphalt).
+
+   Roll = V² / 2a. On a gradient, gravity shifts the acceleration by g·sin(θ) ≈ 0.098·slope%,
+   rounded to 0.1·slope%, so roll' / roll = a / (a ± 0.1·slope). ACCEL is that "a": a single
+   assumed 1.5 m/s² for every aircraft — the model's weakest link, disclosed in the method panel.
+
+   slopePct is signed uphill-positive in the direction of travel (see db-flotte.js), so uphill
+   lengthens the takeoff and shortens the landing, which is why the sign flips between the two.
+   The denominator floor keeps a steep uphill takeoff (where a = 1.5 predicts no takeoff at all)
+   from returning Infinity and blanking the display: it yields a huge distance and a red badge. */
+const ACCEL = 1.5;
+function slopeFactor(kind, slopePct){
+  if (!slopePct) return 1;
+  const g = 0.1 * slopePct;
+  const denom = kind === 'takeoff' ? ACCEL - g : ACCEL + g;
+  return ACCEL / Math.max(denom, 0.15);
+}
 function fmt(n){ const r = Math.round(n) || 0; return r.toLocaleString('fr-FR'); }
 
 /* ---------- Runway SVG (realistic top-down look) ---------- */
-function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRight, iconKey){
+function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRight, iconKey, slopePct){
+  // A sloping runway (slopePct signed uphill-positive, see db-flotte.js) is drawn tilted at its
+  // true angle rather than an exaggerated one: 12% reads as a visibly steep ramp already.
+  // SVG y points down, so a downhill run (slopePct < 0) needs a positive, clockwise rotation.
+  const rot = -Math.atan((slopePct || 0) / 100) * 180 / Math.PI;
+  const rw = 700;
+  // Vertical room the tilt costs: the rotation is centred on the runway, so each end swings
+  // half the width times the sine. Added above AND below, which also keeps the runway centred.
+  const extra = Math.round(Math.abs(Math.sin(rot * Math.PI / 180)) * rw / 2);
+
   // H leaves room under the runway for the runway number and the length caption at their
   // current sizes; raise it before enlarging either, or they collide with the bottom edge.
-  const W = 800, H = 165;
-  const rx0 = 50, rx1 = 750, ry0 = 45, ry1 = 105;
-  const rw = rx1 - rx0;
+  const W = 800, H = 165 + 2 * extra;
+  const rx0 = 50, rx1 = 750, ry0 = 45 + extra, ry1 = 105 + extra;
+  const cx = (rx0 + rx1) / 2, cy = (ry0 + ry1) / 2;
   const surfFill = surface === 'grass' ? '#5a8a44' : '#5b6472';
   const surfFill2 = surface === 'grass' ? '#4d7c3a' : '#4f5865';
 
@@ -624,9 +659,14 @@ function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRig
   const pctMargin = Math.min(1, distMargin / runwayLen);
   const xMargin = rx0 + rw * pctMargin;
 
+  // Text inside the tilted group is counter-rotated about its own anchor: it travels with the
+  // runway end it labels but stays horizontal and readable.
+  const flat = (x, y, inner) => `<g transform="rotate(${-rot} ${x} ${y})">${inner}</g>`;
+
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">`;
   // grass surroundings
   svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="#eef2ec"/>`;
+  svg += `<g transform="rotate(${rot} ${cx} ${cy})">`;
   // runway base
   svg += `<rect x="${rx0}" y="${ry0}" width="${rw}" height="${ry1-ry0}" fill="${surfFill}"/>`;
   // texture stripes
@@ -640,31 +680,66 @@ function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRig
     }
   });
   // centerline dashed
-  svg += `<line x1="${rx0+40}" y1="${(ry0+ry1)/2}" x2="${rx1-40}" y2="${(ry0+ry1)/2}" stroke="#fff" stroke-width="3" stroke-dasharray="16 12" opacity="0.85"/>`;
+  svg += `<line x1="${rx0+40}" y1="${cy}" x2="${rx1-40}" y2="${cy}" stroke="#fff" stroke-width="3" stroke-dasharray="16 12" opacity="0.85"/>`;
   // runway numbers
-  svg += `<text x="${rx0+2}" y="${ry1+24}" font-size="24" font-weight="700" fill="#334155">${numLeft||''}</text>`;
-  svg += `<text x="${rx1-2}" y="${ry0-10}" font-size="24" font-weight="700" fill="#334155" text-anchor="end">${numRight||''}</text>`;
+  svg += flat(rx0+2, ry1+24, `<text x="${rx0+2}" y="${ry1+24}" font-size="24" font-weight="700" fill="#334155">${numLeft||''}</text>`);
+  svg += flat(rx1-2, ry0-10, `<text x="${rx1-2}" y="${ry0-10}" font-size="24" font-weight="700" fill="#334155" text-anchor="end">${numRight||''}</text>`);
   // distance used overlay
   svg += `<rect x="${rx0}" y="${ry0}" width="${xRaw-rx0}" height="${ry1-ry0}" fill="#2563eb" opacity="0.55"/>`;
-  // aircraft icon at raw-distance point
+  // aircraft icon at raw-distance point — left in the tilted frame on purpose, so it sits on
+  // the slope the way the real aircraft does.
   const iconSvgInner = (ICONS[iconKey]||ICONS.lowwing).replace('<svg viewBox="0 0 240 100" fill="none" xmlns="http://www.w3.org/2000/svg">','').replace('</svg>','');
-  svg += `<g transform="translate(${xRaw-26} ${(ry0+ry1)/2-11}) scale(0.22)" color="#0d2440">${iconSvgInner}</g>`;
+  svg += `<g transform="translate(${xRaw-26} ${cy-11}) scale(0.22)" color="#0d2440">${iconSvgInner}</g>`;
   // margin marker
   if (!overflow){
     svg += `<line x1="${xMargin}" y1="${ry0-6}" x2="${xMargin}" y2="${ry1+6}" stroke="#0d2440" stroke-width="3" stroke-dasharray="7 5"/>`;
-    svg += `<text x="${xMargin+6}" y="${ry0-12}" font-size="18" font-weight="700" fill="#0d2440">marge</text>`;
+    // A margin landing just short of the far end pushes the label off the right edge, where the
+    // SVG clips it. Past that point, hang the label on the other side of its marker instead.
+    const tight = xMargin > rx1 - 70;
+    const lx = tight ? xMargin - 6 : xMargin + 6;
+    svg += flat(lx, ry0-12, `<text x="${lx}" y="${ry0-12}" font-size="18" font-weight="700" fill="#0d2440"${tight ? ' text-anchor="end"' : ''}>marge</text>`);
   } else {
     svg += `<rect x="${rx1}" y="${ry0}" width="16" height="${ry1-ry0}" fill="url(#hatch)"/>`;
     // Sits below the runway, not above: above-right is where numRight already is, and the two
     // overlapped (measured) since both are end-anchored on rx1.
-    svg += `<text x="${rx1-4}" y="${ry1+24}" font-size="18" font-weight="700" fill="#b91c1c" text-anchor="end">+${fmt(distMargin-runwayLen)} m hors piste</text>`;
+    svg += flat(rx1-4, ry1+24, `<text x="${rx1-4}" y="${ry1+24}" font-size="18" font-weight="700" fill="#b91c1c" text-anchor="end">+${fmt(distMargin-runwayLen)} m hors piste</text>`);
   }
+  svg += `</g>`;
   svg += `<defs><pattern id="hatch" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="4" height="8" fill="#b91c1c"/></pattern></defs>`;
+  // Slope caption, outside the tilted group so it stays pinned to the top-left corner, which the
+  // runway never reaches at either sign of the tilt.
+  if (slopePct){
+    svg += `<text x="${rx0}" y="24" font-size="22" font-weight="700" fill="#b45309">${slopePct < 0 ? '↘' : '↗'} pente moyenne ${fmtSlope(slopePct)} ${slopePct < 0 ? 'descendante' : 'montante'}</text>`;
+  }
   // Runway length caption. Font sizes here are in viewBox units, not pixels: the 800-unit-wide
   // viewBox renders at ~485 px, so everything is scaled to ~60%. 22 units ≈ 13 px on screen.
-  svg += `<text x="${(rx0+rx1)/2}" y="${ry1+50}" font-size="27" font-weight="600" fill="#334155" text-anchor="middle">${fmt(runwayLen)} m disponibles</text>`;
+  svg += `<text x="${cx}" y="${H-8}" font-size="27" font-weight="600" fill="#334155" text-anchor="middle">${fmt(runwayLen)} m disponibles</text>`;
   svg += `</svg>`;
   return svg;
+}
+
+function fmtSlope(pct){ return Math.abs(pct).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
+
+/* Bandeau altiport, affiché sous le sélecteur de piste (af.altiport dans la base).
+   Appeler avec (null, null) pour le masquer. */
+function renderAltiportBanner(af, rw){
+  const el = document.getElementById('altiportBanner');
+  if (!af || !af.altiport){ el.style.display = 'none'; el.innerHTML = ''; return; }
+  const slope = rw && rw.slopePct;
+  const dep = af.runways.filter(r => r.toda > 0).map(r => r.num).join('/') || '—';
+  const arr = af.runways.filter(r => r.lda > 0).map(r => r.num).join('/') || '—';
+  let items = [];
+  if (slope){
+    items.push('Piste en pente : <span class="altiport-slope">' + fmtSlope(slope) + ' de pente moyenne</span>, ' +
+      (slope > 0 ? 'montante' : 'descendante') + ' dans le sens de la piste ' + rw.num +
+      '. Le roulage est corrigé en conséquence.');
+  }
+  items.push('Sens imposé par la VAC : décollage piste ' + dep + ', atterrissage piste ' + arr + ' uniquement.');
+  items.push('Qualification montagne ou autorisation de site exigée (cursus montagne FFPLUM fortement conseillé en ULM).');
+  items.push('Distances de référence et corrections de cet outil non validées à cette altitude ni sur ce type de terrain : à recouper avec le manuel de vol et un instructeur montagne.');
+  el.innerHTML = '<div class="altiport-title">⚠ Altiport — usage restreint</div><ul>' +
+    items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+  el.style.display = 'block';
 }
 
 /* Manœuvre non autorisée sur ce QFU (toda/lda = 0 dans la base, ex LFSB piste 07) */
@@ -699,7 +774,7 @@ function runwayNumbersFromQFU(qfu){
   return { num: pad(num), recip: pad(recip) };
 }
 
-function computeSide(ac, kind, elevFt, qnh, temp, headwind, surface){
+function computeSide(ac, kind, elevFt, qnh, temp, headwind, surface, slopePct){
   const table = ac[kind];
   let ref = table[surface];
   let usedSurface = surface;
@@ -713,9 +788,15 @@ function computeSide(ac, kind, elevFt, qnh, temp, headwind, surface){
   }
   if (!ref) return null;
   const factor = correctionFactor(ac, elevFt, qnh, temp, headwind);
+  const slope = slopeFactor(kind, slopePct);
+  // The slope only acts on the roll, so the 15 m distance is rebuilt from its two parts
+  // rather than scaled: corrected roll + airborne segment left at its condition-corrected value.
+  const roll = ref.roll * factor * slope;
+  const air = Math.max(ref.dist15 - ref.roll, 0) * factor;
   return {
-    roll: ref.roll * factor,
-    dist15: ref.dist15 * factor,
+    roll,
+    dist15: roll + air,
+    slope,
     fallbackNote
   };
 }
@@ -730,19 +811,28 @@ function recompute(){
   const windSpeed = parseFloat(document.getElementById('windSpeed').value) || 0;
   const margin = parseFloat(document.getElementById('margin').value) || 1.3;
 
-  let elevFt, surface, qfu, toda, lda, numLeft, numRight;
+  let elevFt, surface, qfu, toda, lda, numLeft, numRight, slopePct = 0;
 
   if (airport !== 'custom' && AIRFIELDS[airport]){
     const af = AIRFIELDS[airport];
-    let best = null;
-    af.runways.forEach(r => {
-      const hw = windComponents(windDir, windSpeed, r.qfu).headwind;
-      if (!best || hw > best.hw) best = { num: r.num, hw };
-    });
-    document.getElementById('runwaySuggestion').textContent = best
-      ? 'Suggestion selon le vent : piste ' + best.num +
-        (af.preferredNote && best.num === af.preferredRunway ? ' (' + af.preferredNote + ')' : '')
-      : '';
+    // On an altiport the direction is imposed by the VAC, so a wind-based suggestion would be
+    // worse than useless: it can name a runway on which the manoeuvre is prohibited.
+    if (af.altiport){
+      const dep = af.runways.filter(r => r.toda > 0).map(r => r.num).join('/');
+      const arr = af.runways.filter(r => r.lda > 0).map(r => r.num).join('/');
+      document.getElementById('runwaySuggestion').textContent =
+        'Sens imposé (VAC) : décollage piste ' + (dep || '—') + ', atterrissage piste ' + (arr || '—');
+    } else {
+      let best = null;
+      af.runways.forEach(r => {
+        const hw = windComponents(windDir, windSpeed, r.qfu).headwind;
+        if (!best || hw > best.hw) best = { num: r.num, hw };
+      });
+      document.getElementById('runwaySuggestion').textContent = best
+        ? 'Suggestion selon le vent : piste ' + best.num +
+          (af.preferredNote && best.num === af.preferredRunway ? ' (' + af.preferredNote + ')' : '')
+        : '';
+    }
 
     const runwaySel = document.getElementById('runway');
     const rw = af.runways[parseInt(runwaySel.value, 10)] || af.runways[0];
@@ -751,7 +841,9 @@ function recompute(){
     qfu = rw.qfu;
     toda = rw.toda;
     lda = rw.lda;
+    slopePct = rw.slopePct || 0;
     numLeft = rw.num; numRight = rw.recip;
+    renderAltiportBanner(af, rw);
   } else {
     elevFt = parseFloat(document.getElementById('customElev').value) || 0;
     surface = document.getElementById('customSurface').value;
@@ -761,6 +853,7 @@ function recompute(){
     document.getElementById('runwaySuggestion').textContent = '';
     const rn = runwayNumbersFromQFU(qfu);
     numLeft = rn.num; numRight = rn.recip;
+    renderAltiportBanner(null, null);
   }
 
   const wind = windComponents(windDir, windSpeed, qfu);
@@ -793,7 +886,7 @@ function recompute(){
   document.getElementById('ldIcon').innerHTML = ICONS[ac.icon];
 
   // Takeoff
-  const to = computeSide(ac, 'takeoff', elevFt, qnh, temp, wind.headwind, surface);
+  const to = computeSide(ac, 'takeoff', elevFt, qnh, temp, wind.headwind, surface, slopePct);
   if (to && !(toda > 0)){
     renderProhibited('to', 'Décollage non autorisé sur ce QFU (pas de TODA publiée — voir VAC)');
   } else if (to){
@@ -801,7 +894,7 @@ function recompute(){
     document.getElementById('toDist').textContent = fmt(to.dist15) + ' m';
     const toMarginVal = to.dist15 * margin;
     document.getElementById('toMargin').textContent = fmt(toMarginVal) + ' m';
-    document.getElementById('toViz').innerHTML = buildRunwaySvg(toda, to.dist15, toMarginVal, surface, numLeft, numRight, ac.icon);
+    document.getElementById('toViz').innerHTML = buildRunwaySvg(toda, to.dist15, toMarginVal, surface, numLeft, numRight, ac.icon, slopePct);
     const toSt = statusFor(to.dist15, toMarginVal, toda);
     const toBadge = document.getElementById('toStatus');
     toBadge.className = 'status-badge ' + toSt.cls;
@@ -813,7 +906,7 @@ function recompute(){
   }
 
   // Landing
-  const ld = computeSide(ac, 'landing', elevFt, qnh, temp, wind.headwind, surface);
+  const ld = computeSide(ac, 'landing', elevFt, qnh, temp, wind.headwind, surface, slopePct);
   if (ld && !(lda > 0)){
     renderProhibited('ld', 'Atterrissage non autorisé sur ce QFU (pas de LDA publiée — voir VAC)');
   } else if (ld){
@@ -821,7 +914,7 @@ function recompute(){
     document.getElementById('ldDist').textContent = fmt(ld.dist15) + ' m';
     const ldMarginVal = ld.dist15 * margin;
     document.getElementById('ldMargin').textContent = fmt(ldMarginVal) + ' m';
-    document.getElementById('ldViz').innerHTML = buildRunwaySvg(lda, ld.dist15, ldMarginVal, surface, numLeft, numRight, ac.icon);
+    document.getElementById('ldViz').innerHTML = buildRunwaySvg(lda, ld.dist15, ldMarginVal, surface, numLeft, numRight, ac.icon, slopePct);
     const ldSt = statusFor(ld.dist15, ldMarginVal, lda);
     const ldBadge = document.getElementById('ldStatus');
     ldBadge.className = 'status-badge ' + ldSt.cls;
@@ -850,6 +943,8 @@ function recompute(){
       <tr><td>Vent de face</td><td>× 0,90 par tranche de 10 kt</td></tr>
       <tr><td>Vent arrière</td><td>× 1,10 par tranche de 2 kt</td></tr>
     </table>
+    <p><strong>Correction de pente</strong> (pistes en pente de la base, altiports LFLJ et LFHM) : la distance de roulage vaut V² / 2a, où a est l'accélération au décollage ou la décélération au freinage. En pente, la gravité ajoute une composante g × pente ≈ 0,1 × pente (% de pente), d'où le coefficient <em>cp</em> = 1,5 / (1,5 − 0,1 × pente) au décollage et 1,5 / (1,5 + 0,1 × pente) à l'atterrissage, la pente étant comptée positive quand elle monte dans le sens de la manœuvre. Exemple à Courchevel (12,0 %) : cp = 1,5 / (1,5 + 1,2) = 0,56 au décollage en 04 comme à l'atterrissage en 22, les deux se faisant dans le sens favorable.</p>
+    <p><strong>Limites de cette correction</strong>, à connaître avant de s'y fier : la valeur 1,5 m/s² est une accélération moyenne supposée, identique pour tous les avions de cet outil et pour les deux manœuvres, alors qu'elle dépend en réalité de l'avion, de sa masse et de l'état de la piste ; c'est le point faible du modèle. Le coefficient n'est appliqué qu'au <strong>roulage</strong>, la part en l'air de la distance de passage des 15 m n'étant pas affectée par la pente du revêtement. La pente utilisée est la <strong>pente moyenne</strong> de la VAC, alors que le profil réel est fait de segments plus raides et plus plats (jusqu'à 18,66 % à Courchevel). Enfin, cette correction <em>réduit</em> les distances : contrairement au reste de l'outil, elle joue dans le sens optimiste.</p>
     <p>Le choix de la piste revêtue ou herbe utilise directement la ligne de référence correspondante du manuel quand elle existe (pas de double correction). Si elle n'existe pas pour l'avion sélectionné, l'autre surface est utilisée avec un avertissement affiché sur la carte concernée.</p>
     <p><strong>Altitude pression</strong> = altitude terrain + (1013,25 − QNH) × 30 ft. <strong>Température standard (ISA)</strong> à cette altitude = 15 − 2 × (altitude pression / 1000) °C. Pour les avions dont la référence manuel n'est pas au niveau de la mer/ISA/vent nul (WT9 LSA), la correction est calculée par rapport à la condition de référence réelle du manuel, pas par rapport au niveau de la mer.</p>
     <p><strong>Altitude densité</strong> (affichée à titre indicatif) ≈ altitude pression + 120 ft par °C d'écart à la température standard, approximation usuelle. Le calcul des distances n'utilise pas cette valeur : il applique directement les facteurs altitude pression et écart ISA ci-dessus.</p>

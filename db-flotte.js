@@ -56,7 +56,13 @@
    FORMAT D'UN TERRAIN ("airfields") :
    "CODE_OACI": {
      "name":            libellé du sélecteur,
-     "elevFt":          altitude du terrain (ft),
+     "elevFt":          altitude du terrain (ft) ; sur une piste en pente,
+                        retenir l'altitude la plus HAUTE (ALT SUP de la VAC),
+                        qui est le choix le plus pénalisant donc le plus sûr,
+     "altiport":        facultatif — true si altiport/altisurface : déclenche
+                        le bandeau orange d'avertissement, la piste inclinée
+                        sur le schéma, et remplace la suggestion de piste au
+                        vent par le sens imposé (déduit des toda/lda nuls),
      "preferredRunway": facultatif — piste préférentielle,
      "preferredNote":   facultatif — motif affiché avec la suggestion,
      "runways": [   TABLEAU (l'ordre de déclaration = ordre d'affichage ;
@@ -69,7 +75,13 @@
          "surface": "paved"|"grass", "toda": distance décollage TODA (m),
          "lda": distance atterrissage LDA (m) ; 0 = manœuvre NON AUTORISÉE
          sur ce QFU (ex LFSB piste 07 : décollage seul, LDA absente de la
-         VAC) — l'outil affiche alors un statut "interdit" }
+         VAC) — l'outil affiche alors un statut "interdit",
+         "slopePct": facultatif — pente moyenne de la piste en %, SIGNÉE
+         DANS LE SENS DE LA MANŒUVRE : positif = ça monte quand on roule
+         de ce seuil vers le seuil opposé, négatif = ça descend. Les deux
+         seuils d'une même piste portent donc la même valeur au signe près
+         (ex LFLJ : "04" = -12.0, "22" = +12.0). Absent = piste plate.
+         Se lit sur le "profil en long de la piste" de la VAC }
      ],
      "source":          facultatif, documentaire — carte VAC citée (AMDT),
      "remarks":         facultatif, documentaire (non affiché) — statut du
@@ -285,6 +297,28 @@ window.PERF_DB = {
       ],
       "source": "Carte VAC SIA AD-2 LFSB ATT 01 (AMDT 06/26), eAIP 09 JUL 2026 ; pistes 15/33 : distances VFR avions <= 5,7 t (TKOF/LDG travers TWY G et E, LDG DTHR 33) des consignes particulières TXT.",
       "remarks": "CTR de classe D, clairance obligatoire. Piste 07 : décollage seulement (pas de LDA publiée). Pleine piste 15/33 : 3900 m (TODA 4000), réservée hors consignes VFR <= 5,7 t."
+    },
+    "LFLJ": {
+      "name": "Courchevel (LFLJ) — altiport",
+      "elevFt": 6583,
+      "altiport": true,
+      "runways": [
+        { "num": "04", "recip": "22", "qfu": 42,  "surface": "paved", "toda": 536, "lda": 0,   "slopePct": -12.0 },
+        { "num": "22", "recip": "04", "qfu": 222, "surface": "paved", "toda": 0,   "lda": 508, "slopePct": 12.0 }
+      ],
+      "source": "Carte VAC SIA AD-2 LFLJ ATT 01 (AMDT 13/22) et TXT 01/02 (AMDT 02/23, 09/24). Pente moyenne calculée sur les altitudes publiées ALT SUP 6583 ft / ALT INF 6371 ft, soit 212 ft sur 536 m = 12,0 %.",
+      "remarks": "ALTIPORT, usage restreint. Qualification montagne roue ou autorisation de site obligatoire pour les pilotes avion ; cursus montagne FFPLUM fortement conseillé en ULM. DEP piste 04 et ARR piste 22 OBLIGATOIRES (VAC TXT 02). LDA 22 = 508 m, réduite cause obstacles dans la bande de piste. Profil en long VAC : 122 m à 0,45 %, 280 m à 18,66 %, 134 m à 12,5 % (pente maximale 18,66 %, bien supérieure à la moyenne retenue). Les segments additionnés donnent 228 ft au lieu des 212 ft des altitudes publiées : la VAC n'est pas cohérente avec elle-même, on retient la valeur la moins favorable. AD ouvert 0800-1800 sauf accord exploitant. elevFt = ALT SUP (choix pénalisant)."
+    },
+    "LFHM": {
+      "name": "Megève (LFHM) — altiport",
+      "elevFt": 4830,
+      "altiport": true,
+      "runways": [
+        { "num": "15", "recip": "33", "qfu": 153, "surface": "paved", "toda": 0,   "lda": 520, "slopePct": 7.4 },
+        { "num": "33", "recip": "15", "qfu": 333, "surface": "paved", "toda": 548, "lda": 0,   "slopePct": -7.4 }
+      ],
+      "source": "Carte VAC SIA AD-2 LFHM ATT 01 (AMDT 09/24) et TXT 01. Pente moyenne calculée sur les altitudes publiées ALT SUP 4830 ft / ALT INF 4697 ft, soit les 133 ft annoncés sur le profil en long, sur 548 m = 7,4 %.",
+      "remarks": "ALTIPORT, usage restreint. Qualification montagne (roues et/ou skis) ou autorisation de site obligatoire pour les pilotes avion ; cursus montagne FFPLUM fortement conseillé en ULM. Décollage piste 33 et atterrissage piste 15 seuls publiés au tableau des distances déclarées. LDA 15 = 520 m, réduite cause obstacle à l'extrémité supérieure de la bande de piste. TODA 33 = 548 m (ASDA 625 m grâce au SWY de 72 m en prolongement bas, non utilisable au décollage). Profil en long VAC : 396 m à 7 %, 122 m à 9,3 %, 30 m à 3,8 %. Câbles de téléphérique non balisés à proximité des circuits. elevFt = ALT SUP (choix pénalisant)."
     }
   },
 
