@@ -288,7 +288,7 @@
       </div>
       <div class="field">
         <label for="margin">Marge de sécurité <span class="unit-hint">(facteur ×)</span></label>
-        <input type="number" id="margin" value="1.3" step="0.05" min="1" oninput="recompute()">
+        <input type="number" id="margin" value="1.2" step="0.05" min="1" oninput="recompute()">
       </div>
     </div>
 
@@ -809,7 +809,7 @@ function recompute(){
   const qnh = parseFloat(document.getElementById('qnh').value) || 1013.25;
   const windDir = parseFloat(document.getElementById('windDir').value) || 0;
   const windSpeed = parseFloat(document.getElementById('windSpeed').value) || 0;
-  const margin = parseFloat(document.getElementById('margin').value) || 1.3;
+  const margin = parseFloat(document.getElementById('margin').value) || 1.2;
 
   let elevFt, surface, qfu, toda, lda, numLeft, numRight, slopePct = 0;
 
@@ -949,7 +949,7 @@ function recompute(){
     <p><strong>Altitude pression</strong> = altitude terrain + (1013,25 − QNH) × 30 ft. <strong>Température standard (ISA)</strong> à cette altitude = 15 − 2 × (altitude pression / 1000) °C. Pour les avions dont la référence manuel n'est pas au niveau de la mer/ISA/vent nul (WT9 LSA), la correction est calculée par rapport à la condition de référence réelle du manuel, pas par rapport au niveau de la mer.</p>
     <p><strong>Altitude densité</strong> (affichée à titre indicatif) ≈ altitude pression + 120 ft par °C d'écart à la température standard, approximation usuelle. Le calcul des distances n'utilise pas cette valeur : il applique directement les facteurs altitude pression et écart ISA ci-dessus.</p>
     <p><strong>Direction du vent</strong> : le vent d'un METAR est exprimé par rapport au nord vrai, alors que le QFU de piste est magnétique. La déclinaison magnétique locale (environ 2° E en Alsace) est négligeable devant la précision de ce modèle : aucune correction n'est appliquée aux composantes de vent affichées.</p>
-    <p><strong>Marge de sécurité</strong> : facteur multiplicatif appliqué à la distance corrigée (passage 15 m), réglable, valeur usuelle 1,3.</p>
+    <p><strong>Marge de sécurité</strong> : facteur multiplicatif appliqué à la distance corrigée (passage 15 m), réglable. Valeur par défaut 1,2, soit la majoration de 20 % couramment enseignée en aviation légère ; aucun facteur n'est imposé en VFR privé, le choix reste celui du commandant de bord. Attention à ne pas la confondre avec le passage des 15 m : celui-ci n'est pas une réserve, c'est la distance réellement nécessaire pour franchir un obstacle de 15 m. La marge couvre autre chose — l'écart entre le manuel (avion neuf, pilote d'essai, piste idéale) et la réalité du jour (usure moteur, technique, état de la piste), ainsi que l'imprécision des corrections extrapolées de cet outil.</p>
   `;
 }
 
