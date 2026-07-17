@@ -7,6 +7,9 @@
 # l'appli sont dans "images avions/" et restent versionnées.
 /*.png
 
+# ... à l'exception du logo du club, qui fait partie de l'appli (en-tête).
+!/logo.png
+
 # === Config locale Claude Code ===
 .claude/settings.local.json
 

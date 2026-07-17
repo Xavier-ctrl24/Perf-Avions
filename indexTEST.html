@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculateur de performances — Flottille Aéroclub de Haguenau</title>
+<title>[TEST cockpit] Calculateur de performances — Flottille Aéroclub de Haguenau</title>
 <meta name="description" content="Distances de décollage et d'atterrissage de la flotte de l'Aéroclub de Haguenau.">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#17191d">
@@ -79,6 +79,11 @@
     content:"";width:9px;height:9px;border-radius:50%;flex:none;
     background:var(--phos);
     box-shadow:0 0 9px var(--phos), inset 0 -1px 1px rgba(0,0,0,.4);
+  }
+  header h1::after{
+    content:"VERSION TEST";color:var(--amber);font-size:.62rem;font-weight:700;
+    letter-spacing:1.4px;border:1px solid var(--amber);border-radius:4px;
+    padding:2px 7px;text-shadow:none;
   }
   .print-row{text-align:center;margin-top:18px;}
   #printBtn{
@@ -292,6 +297,7 @@
     #printBtn, .no-print{display:none !important;}
     header{color:#000;background:#fff;border:1px solid #000;box-shadow:none;}
     header h1::before{display:none;}
+    header h1::after{display:none;}
     header h1{text-shadow:none;}
     .logo{box-shadow:none;border:1px solid #999;}
     .panel,.card,details.method,.wind-metric,.metar-block,.aircraft-preview{
@@ -1126,7 +1132,7 @@ if (DB_OK){
 // Un service worker est interdit sous file:// : sans ce test, l'ouverture de la
 // page par double-clic (usage documenté dans CLAUDE.md) crache une erreur en
 // console. Dans ce cas l'appli marche exactement comme avant, sans le hors-ligne.
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')){
+if (false && 'serviceWorker' in navigator && location.protocol.startsWith('http')){ // désactivé dans la copie de TEST
   let updateAccepted = false;
   let reloading = false;
 

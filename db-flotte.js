@@ -26,6 +26,13 @@
    "cle_avion": {
      "name":           nom affiché dans le sélecteur,
      "mtow":           masse maxi au décollage (kg),
+     "info":           fiche descriptive affichée dans l'aperçu (données
+                       d'identité fournies par le club, sans rôle dans le
+                       calcul) : { "maker": constructeur, "model": modèle,
+                       "engine": moteur, "power": puissance (texte, ex
+                       "100 hp"), "cruise": vitesse de croisière (texte, ex
+                       "230 km/h") }. Un champ inconnu se met à null et ne
+                       s'affiche pas,
      "toFlaps":        volets décollage (texte affiché),
      "ldgFlaps":       volets atterrissage (texte affiché),
      "crosswindLimit": vent traversier démontré (kt), null si inconnu
@@ -101,6 +108,7 @@ window.PERF_DB = {
   "aircraft": {
     "wt9_ulm": {
       "name": "Dynamic WT9 (ULM)", "mtow": 525,
+      "info": { "maker": "Aerospool", "model": "WT9 Dynamic Club", "engine": "Rotax 912 ULS", "power": "100 hp", "cruise": "230 km/h" },
       "toFlaps": "15°", "ldgFlaps": "35°", "crosswindLimit": 24,
       "ref": { "elevFt": 0, "tempC": 15, "headwindKt": 0 },
       "refDesc": "niveau de la mer, ISA (15 °C), vent nul",
@@ -111,6 +119,7 @@ window.PERF_DB = {
     },
     "wt9_lsa": {
       "name": "Dynamic WT9 (LSA)", "mtow": 600,
+      "info": { "maker": "Aerospool", "model": "WT9 LSA Dynamic Club", "engine": "Rotax 912 ULS2", "power": "100 hp", "cruise": "230 km/h" },
       "toFlaps": "1 (15°)", "ldgFlaps": "2 (24°)", "crosswindLimit": 24,
       "ref": { "elevFt": 2000, "tempC": 15, "headwindKt": -2 },
       "refDesc": "altitude-pression 2 000 ft, 15 °C, vent arrière 2 kt (exemple du manuel)",
@@ -122,6 +131,7 @@ window.PERF_DB = {
     },
     "ps28": {
       "name": "PS-28 Cruiser", "mtow": 600,
+      "info": { "maker": "Czech Sport Aircraft", "model": "PS-28 Cruiser", "engine": "BRP-Powertrain 912S2", "power": "98 hp", "cruise": "170 km/h" },
       "toFlaps": "12°", "ldgFlaps": "30°", "crosswindLimit": null,
       "ref": { "elevFt": 0, "tempC": 15, "headwindKt": 0 },
       "refDesc": "niveau de la mer, ISA (15 °C), vent nul",
@@ -132,6 +142,7 @@ window.PERF_DB = {
     },
     "c172": {
       "name": "Cessna 172", "mtow": 1158,
+      "info": { "maker": "Cessna", "model": "172S", "engine": "Lycoming IO-360-L2A", "power": "180 hp", "cruise": "230 km/h" },
       "toFlaps": "réf. manuel", "ldgFlaps": "réf. manuel", "crosswindLimit": null,
       "ref": { "elevFt": 0, "tempC": 15, "headwindKt": 0 },
       "refDesc": "niveau de la mer, ISA (15 °C), vent nul",
@@ -142,6 +153,7 @@ window.PERF_DB = {
     },
     "pa28": {
       "name": "PA-28-181 Archer III", "mtow": 1157,
+      "info": { "maker": "Piper", "model": "PA-28-181 Archer III", "engine": "Lycoming IO-360-A4M", "power": "180 hp", "cruise": "230 km/h" },
       "toFlaps": "25°", "ldgFlaps": "40°", "crosswindLimit": null,
       "ref": { "elevFt": 0, "tempC": 15, "headwindKt": 0 },
       "refDesc": "niveau de la mer, ISA (15 °C), vent nul",
@@ -152,6 +164,7 @@ window.PERF_DB = {
     },
     "tetras": {
       "name": "Tétras", "mtow": 515,
+      "info": { "maker": "Humbert Aviation", "model": "Tétras 912 CS", "engine": "Rotax 912 ULS", "power": "100 hp", "cruise": "170 km/h" },
       "toFlaps": "réf. manuel", "ldgFlaps": "réf. manuel", "crosswindLimit": null,
       "ref": { "elevFt": 1000, "tempC": 15, "headwindKt": 0 },
       "refDesc": "altitude-pression 1 000 ft, 15 °C, vent nul, piste en herbe",
@@ -162,6 +175,7 @@ window.PERF_DB = {
     },
     "savannah": {
       "name": "ICP Savannah S", "mtow": 472.5,
+      "info": { "maker": "ICP", "model": "Savannah S", "engine": "Rotax 912 UL", "power": "80 hp", "cruise": "150 km/h" },
       "toFlaps": "15°", "ldgFlaps": "réf. manuel", "crosswindLimit": null,
       "ref": { "elevFt": 0, "tempC": 15, "headwindKt": 0 },
       "refDesc": "niveau de la mer, ISA (15 °C), vent nul, surface dure",
