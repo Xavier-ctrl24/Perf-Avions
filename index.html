@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calculateur de performances — Flottille Aéroclub de Haguenau</title>
+<meta name="description" content="Distances de décollage et d'atterrissage de la flotte de l'Aéroclub de Haguenau.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d2440">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Perf Avions">
 <style>
   :root{
     --navy:#0d2440;
@@ -124,6 +130,17 @@
   .altiport-banner .altiport-slope{font-weight:700;}
   .altiport-banner ul{margin:6px 0 0;padding-left:18px;}
 
+  /* Bandeau de mise à jour PWA (masqué tant qu'aucune version n'attend) */
+  .update-banner{display:none;align-items:center;gap:12px;flex-wrap:wrap;
+    margin-bottom:14px;background:var(--amber-bg);border:1px solid var(--amber);
+    border-left-width:5px;border-radius:8px;padding:10px 14px;color:var(--amber);
+    font-size:.8rem;line-height:1.5;}
+  .update-banner.show{display:flex;}
+  .update-banner span{flex:1;min-width:200px;}
+  .update-banner button{background:var(--amber);color:#fff;border:none;border-radius:7px;
+    padding:7px 14px;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+  .update-banner button:hover{filter:brightness(1.1);}
+
   .wind-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
   .wind-metric{background:var(--slate-50);border:1px solid var(--slate-200);border-radius:8px;padding:14px 16px;}
   .wind-metric .label{font-size:.75rem;color:var(--slate-500);text-transform:uppercase;letter-spacing:.4px;}
@@ -182,6 +199,11 @@
 </head>
 <body>
 <div class="app">
+
+  <div class="update-banner" id="updateBanner">
+    <span><strong>Une nouvelle version est disponible.</strong> Recharge pour l'appliquer.</span>
+    <button type="button" id="updateReloadBtn">Recharger</button>
+  </div>
 
   <header>
     <div>
@@ -505,6 +527,13 @@ async function fetchMetar(){
 
   if (!/^[A-Z]{4}$/.test(icao)){
     setMetarStatus('Code OACI invalide : 4 lettres attendues (ex. LFST).', 'error');
+    return;
+  }
+
+  // Le reste de l'appli fonctionne hors-ligne, le METAR non : il faut aller le
+  // chercher. Message explicite plutôt que deux fetch voués à échouer.
+  if (!navigator.onLine){
+    setMetarStatus('Hors connexion : le METAR nécessite Internet. Saisis le vent, la température et le QNH à la main.', 'error');
     return;
   }
 
@@ -957,6 +986,58 @@ if (DB_OK){
   buildAirportPicker();
   buildAircraftPicker();
   recompute();
+}
+
+/* ---------- Service worker (mode hors-ligne + bandeau de mise à jour) ----------
+   Volontairement en dehors du garde-fou DB_OK : le hors-ligne ne dépend pas de
+   la base de données, et c'est même quand db-flotte.js manque qu'on veut que le
+   cache puisse le resservir. */
+
+// Un service worker est interdit sous file:// : sans ce test, l'ouverture de la
+// page par double-clic (usage documenté dans CLAUDE.md) crache une erreur en
+// console. Dans ce cas l'appli marche exactement comme avant, sans le hors-ligne.
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  let updateAccepted = false;
+  let reloading = false;
+
+  const banner = document.getElementById('updateBanner');
+  const showUpdateBanner = (worker) => {
+    banner.classList.add('show');
+    document.getElementById('updateReloadBtn').onclick = () => {
+      updateAccepted = true;
+      worker.postMessage({ type: 'SKIP_WAITING' });
+    };
+  };
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    // clients.claim() déclenche aussi cet évènement à la toute première visite.
+    // Sans ce test, la page se rechargerait toute seule dès le premier chargement.
+    if (!updateAccepted || reloading) return;
+    reloading = true;
+    location.reload();
+  });
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      // Une version a fini d'installer et attend déjà : cas d'un onglet rouvert.
+      if (reg.waiting && navigator.serviceWorker.controller) showUpdateBanner(reg.waiting);
+
+      reg.addEventListener('updatefound', () => {
+        const incoming = reg.installing;
+        if (!incoming) return;
+        incoming.addEventListener('statechange', () => {
+          // 'installed' + un contrôleur déjà en place = c'est une mise à jour,
+          // pas la première installation. Seul ce cas mérite le bandeau.
+          if (incoming.state === 'installed' && navigator.serviceWorker.controller){
+            showUpdateBanner(incoming);
+          }
+        });
+      });
+    }).catch((err) => {
+      // Pas de hors-ligne, mais l'appli reste parfaitement utilisable.
+      console.warn('Service worker non enregistré :', err);
+    });
+  });
 }
 </script>
 </body>

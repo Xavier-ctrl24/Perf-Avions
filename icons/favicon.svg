@@ -1,0 +1,18 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Perf Avions">
+  <!-- Source de vérité des icônes PNG (icon-192, icon-512, apple-touch-icon) et
+       favicon. Avion léger bas-aile vu de dessus, blanc sur --navy #0d2440.
+       Vue de dessus et non de profil (contrairement à PERF_DB.icons.wt9, dans
+       db-flotte.js) : un profil est 4,6 fois plus large que haut et devient un
+       trait illisible une fois enfermé dans un carré de 48 px. -->
+  <rect width="512" height="512" rx="64" ry="64" fill="#0d2440"/>
+  <g fill="#fff">
+    <rect x="171" y="62" width="170" height="9" rx="4.5"/>
+    <path d="M256 72c14 0 24 26 26 62l4 96c2 60-2 132-6 180h-48c-4-48-8-120-6-180l4-96c2-36 12-62 26-62z"/>
+    <polygon points="230,182 48,226 48,254 230,272"/>
+    <polygon points="282,182 464,226 464,254 282,272"/>
+    <polygon points="234,398 152,424 152,442 234,450"/>
+    <polygon points="278,398 360,424 360,442 278,450"/>
+    <rect x="249" y="392" width="14" height="62" rx="6"/>
+  </g>
+  <ellipse cx="256" cy="196" rx="27" ry="54" fill="#0d2440" opacity="0.85"/>
+</svg>

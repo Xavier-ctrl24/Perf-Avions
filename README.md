@@ -29,6 +29,16 @@ Aucune étape de build.
   ```
   puis ouvrir <http://localhost:8744/>.
 
+### Installer sur smartphone
+
+Le site est une **PWA** : ouvrir <https://perf-avions-3skt.vercel.app/> sur le
+téléphone, puis « Ajouter à l'écran d'accueil » (Android : menu ⋮ ; iOS : bouton
+Partager). L'appli s'ouvre alors en plein écran et **fonctionne sans connexion**,
+ce qui est le cas d'usage réel : préparer une perfo au terrain, sans réseau.
+
+Seule la récupération du METAR nécessite Internet ; hors connexion, l'appli le
+signale et il suffit de saisir vent, température et QNH à la main.
+
 ## Structure
 
 | Fichier | Rôle |
@@ -36,6 +46,10 @@ Aucune étape de build.
 | `index.html` | Toute la logique et l'interface. Nommé `index.html` pour être servi par défaut à la racine du site par Vercel. |
 | `db-flotte.js` | Les données : perfs avions, aérodromes, icônes SVG. Chargé via `<script src>`, doit rester à côté du HTML. |
 | `images avions/*.png` | Photos des avions affichées dans le sélecteur. |
+| `manifest.json` | Carte d'identité de la PWA (nom, icône, couleur) : déclenche l'installation sur l'écran d'accueil. |
+| `sw.js` | Service worker : met l'appli en cache pour le mode hors-ligne. **Incrémenter `CACHE` à chaque modif** d'un fichier caché. |
+| `icons/` | Icônes de l'appli. `icon.svg` est la source ; les PNG en sont dérivés. |
+| `vercel.json` | En-têtes HTTP : empêche la mise en cache de `sw.js`, sans quoi les mises à jour ne seraient jamais détectées. |
 | `CLAUDE.md` | Documentation d'architecture (pour Claude Code et les contributeurs). |
 
 ## Avions et aérodromes couverts
