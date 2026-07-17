@@ -38,3 +38,18 @@ Structure of the HTML `<script>` block, top to bottom:
 - Units are mixed on purpose to match how French GA pilots read POHs and METARs: distances in **meters**, altitudes in **feet**, speeds in **knots**. Don't silently normalize a field to a different unit.
 - Every number surfaced to the user should trace back to a manual citation (`source` field) or be explicitly flagged as an approximation (`note` field, or a line in the "Méthode de calcul" `<details>` panel). When adding an aircraft or a correction, prefer citing the manual section over inventing a figure — this is a real flight-planning aid, not a demo.
 - Image paths use `images%20avions/...` (percent-encoded space) because the folder `images avions` has a literal space in its name.
+
+## Working with the repo owner
+
+The owner is a pilot and a nurse, not a professional developer, and is learning the whole toolchain through this project. Two consequences for how to work here:
+
+- **Explain, don't just execute.** Introduce a technical term the first time it comes up (one or two sentences, concrete analogy), say what a command will do before running it and what happened after, and propose the next step rather than waiting to be asked. Keep it brief — the goal is comprehension, not a tutorial.
+- **The process is part of the goal.** This project is deliberately small so that it can go the full route: code → git → GitHub → Vercel → a smartphone app. Don't skip a step because it looks trivial, and don't do it silently.
+
+## Roadmap
+
+The tool itself works; what remains is the rest of the chain.
+
+1. ~~Publish on GitHub~~ — done, <https://github.com/Xavier-ctrl24/Perf-Avions>, served by GitHub Pages from `index.html`.
+2. **Deploy on Vercel** — not started.
+3. **Smartphone app** — not started. Intended direction: make the page installable (PWA) rather than rebuild it natively, since it's already a self-contained static page.
