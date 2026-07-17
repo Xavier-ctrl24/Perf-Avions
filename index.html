@@ -610,7 +610,9 @@ function fmt(n){ const r = Math.round(n) || 0; return r.toLocaleString('fr-FR');
 
 /* ---------- Runway SVG (realistic top-down look) ---------- */
 function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRight, iconKey){
-  const W = 800, H = 150;
+  // H leaves room under the runway for the runway number and the length caption at their
+  // current sizes; raise it before enlarging either, or they collide with the bottom edge.
+  const W = 800, H = 165;
   const rx0 = 50, rx1 = 750, ry0 = 45, ry1 = 105;
   const rw = rx1 - rx0;
   const surfFill = surface === 'grass' ? '#5a8a44' : '#5b6472';
@@ -640,8 +642,8 @@ function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRig
   // centerline dashed
   svg += `<line x1="${rx0+40}" y1="${(ry0+ry1)/2}" x2="${rx1-40}" y2="${(ry0+ry1)/2}" stroke="#fff" stroke-width="3" stroke-dasharray="16 12" opacity="0.85"/>`;
   // runway numbers
-  svg += `<text x="${rx0+2}" y="${ry1+18}" font-size="15" font-weight="700" fill="#334155">${numLeft||''}</text>`;
-  svg += `<text x="${rx1-2}" y="${ry0-8}" font-size="15" font-weight="700" fill="#334155" text-anchor="end">${numRight||''}</text>`;
+  svg += `<text x="${rx0+2}" y="${ry1+24}" font-size="24" font-weight="700" fill="#334155">${numLeft||''}</text>`;
+  svg += `<text x="${rx1-2}" y="${ry0-10}" font-size="24" font-weight="700" fill="#334155" text-anchor="end">${numRight||''}</text>`;
   // distance used overlay
   svg += `<rect x="${rx0}" y="${ry0}" width="${xRaw-rx0}" height="${ry1-ry0}" fill="#2563eb" opacity="0.55"/>`;
   // aircraft icon at raw-distance point
@@ -649,16 +651,18 @@ function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRig
   svg += `<g transform="translate(${xRaw-26} ${(ry0+ry1)/2-11}) scale(0.22)" color="#0d2440">${iconSvgInner}</g>`;
   // margin marker
   if (!overflow){
-    svg += `<line x1="${xMargin}" y1="${ry0-6}" x2="${xMargin}" y2="${ry1+6}" stroke="#0d2440" stroke-width="2" stroke-dasharray="5 4"/>`;
-    svg += `<text x="${xMargin+4}" y="${ry0-10}" font-size="11" font-weight="700" fill="#0d2440">marge</text>`;
+    svg += `<line x1="${xMargin}" y1="${ry0-6}" x2="${xMargin}" y2="${ry1+6}" stroke="#0d2440" stroke-width="3" stroke-dasharray="7 5"/>`;
+    svg += `<text x="${xMargin+6}" y="${ry0-12}" font-size="18" font-weight="700" fill="#0d2440">marge</text>`;
   } else {
     svg += `<rect x="${rx1}" y="${ry0}" width="16" height="${ry1-ry0}" fill="url(#hatch)"/>`;
-    svg += `<text x="${rx1-4}" y="${ry0-10}" font-size="11" font-weight="700" fill="#b91c1c" text-anchor="end">+${fmt(distMargin-runwayLen)} m hors piste</text>`;
+    // Sits below the runway, not above: above-right is where numRight already is, and the two
+    // overlapped (measured) since both are end-anchored on rx1.
+    svg += `<text x="${rx1-4}" y="${ry1+24}" font-size="18" font-weight="700" fill="#b91c1c" text-anchor="end">+${fmt(distMargin-runwayLen)} m hors piste</text>`;
   }
   svg += `<defs><pattern id="hatch" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="4" height="8" fill="#b91c1c"/></pattern></defs>`;
   // Runway length caption. Font sizes here are in viewBox units, not pixels: the 800-unit-wide
   // viewBox renders at ~485 px, so everything is scaled to ~60%. 22 units ≈ 13 px on screen.
-  svg += `<text x="${(rx0+rx1)/2}" y="${ry1+36}" font-size="22" font-weight="600" fill="#334155" text-anchor="middle">${fmt(runwayLen)} m disponibles</text>`;
+  svg += `<text x="${(rx0+rx1)/2}" y="${ry1+50}" font-size="27" font-weight="600" fill="#334155" text-anchor="middle">${fmt(runwayLen)} m disponibles</text>`;
   svg += `</svg>`;
   return svg;
 }
