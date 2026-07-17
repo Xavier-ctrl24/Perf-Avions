@@ -656,8 +656,9 @@ function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRig
     svg += `<text x="${rx1-4}" y="${ry0-10}" font-size="11" font-weight="700" fill="#b91c1c" text-anchor="end">+${fmt(distMargin-runwayLen)} m hors piste</text>`;
   }
   svg += `<defs><pattern id="hatch" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="4" height="8" fill="#b91c1c"/></pattern></defs>`;
-  // runway length caption
-  svg += `<text x="${(rx0+rx1)/2}" y="${ry1+34}" font-size="12" fill="#64748b" text-anchor="middle">${fmt(runwayLen)} m disponibles</text>`;
+  // Runway length caption. Font sizes here are in viewBox units, not pixels: the 800-unit-wide
+  // viewBox renders at ~485 px, so everything is scaled to ~60%. 22 units ≈ 13 px on screen.
+  svg += `<text x="${(rx0+rx1)/2}" y="${ry1+36}" font-size="22" font-weight="600" fill="#334155" text-anchor="middle">${fmt(runwayLen)} m disponibles</text>`;
   svg += `</svg>`;
   return svg;
 }
