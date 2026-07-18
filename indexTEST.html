@@ -288,6 +288,23 @@
 
   footer{text-align:center;font-size:.75rem;color:var(--cream-dim);margin:22px 0 6px;}
 
+  /* ==== Ajouts bac à sable (TEST) ==== */
+
+  /* Rose des vents : instrument SVG dans une tuile du wind-panel */
+  .wind-rose-tile{display:flex;flex-direction:column;}
+  .wind-rose-tile svg{width:100%;max-width:210px;height:auto;margin:6px auto 0;display:block;}
+
+  /* Sous-ligne d'une tuile (avertissement traversier, coucher du soleil) */
+  .tile-sub{font-size:.72rem;color:var(--cream-dim);margin-top:4px;line-height:1.4;}
+  .tile-sub.warn{color:var(--amber);}
+
+  /* Citation du hangar, au-dessus du pied de page */
+  .hangar-quote{
+    text-align:center;font-size:.8rem;color:var(--cream-dim);font-style:italic;
+    margin:20px auto 0;max-width:640px;line-height:1.5;
+  }
+  .hangar-quote::before{content:"✈ ";font-style:normal;color:var(--phos);}
+
   @media (prefers-reduced-motion:reduce){
     *{animation:none !important;transition:none !important;}
   }
@@ -319,6 +336,8 @@
     details.method{display:block;}
     details.method summary{list-style:none;}
     .results{grid-template-columns:1fr 1fr;}
+    .hangar-quote{display:none !important;}
+    .wind-metric svg{filter:grayscale(1);}
   }
 </style>
 </head>
@@ -332,7 +351,7 @@
 
   <header>
     <div class="brand">
-      <img src="logo.png" class="logo" alt="Logo de l'aéroclub">
+      <img src="logo-test.svg" class="logo" alt="Logo Perf Avions (essai)">
       <h1>Takeoff / Landing Performance</h1>
     </div>
   </header>
@@ -439,10 +458,9 @@
     </div>
 
     <div class="wind-panel" style="margin-top:16px;">
-      <div class="wind-metric"><div class="label" id="windHeadLabel">Vent de face</div><div class="value" id="windHeadValue">–</div></div>
-      <div class="wind-metric"><div class="label" id="windCrossLabel">Vent traversier</div><div class="value" id="windCrossValue">–</div></div>
-      <div class="wind-metric"><div class="label">Altitude pression</div><div class="value" id="paValue">–</div></div>
-      <div class="wind-metric"><div class="label">Altitude densité</div><div class="value" id="daValue">–</div></div>
+      <div class="wind-metric wind-rose-tile"><div class="label" id="windRoseLabel">Vent</div><div id="windRose"></div><div class="tile-sub" id="windCrossWarn"></div></div>
+      <div class="wind-metric wind-rose-tile"><div class="label">Altimètre — pression / densité</div><div id="altimeter"></div></div>
+      <div class="wind-metric wind-rose-tile" id="nightTile"><div class="label" id="nightLabel">Jour / nuit aéronautiques</div><div id="nightClock"></div><div class="tile-sub" id="nightSub"></div></div>
     </div>
   </section>
 
@@ -458,6 +476,7 @@
         <div class="metric"><div class="label">Roulement</div><div class="value" id="toRoll">–</div></div>
         <div class="metric"><div class="label">Passage 15 m</div><div class="value" id="toDist">–</div></div>
         <div class="metric"><div class="label">Avec marge</div><div class="value" id="toMargin">–</div></div>
+        <div class="metric"><div class="label">Disponible</div><div class="value" id="toAvail">–</div></div>
       </div>
       <div class="runway-svg-wrap" id="toViz"></div>
       <div id="toNote"></div>
@@ -474,6 +493,7 @@
         <div class="metric"><div class="label">Roulement</div><div class="value" id="ldRoll">–</div></div>
         <div class="metric"><div class="label">Passage 15 m</div><div class="value" id="ldDist">–</div></div>
         <div class="metric"><div class="label">Avec marge</div><div class="value" id="ldMargin">–</div></div>
+        <div class="metric"><div class="label">Disponible</div><div class="value" id="ldAvail">–</div></div>
       </div>
       <div class="runway-svg-wrap" id="ldViz"></div>
       <div id="ldNote"></div>
@@ -493,7 +513,9 @@
     <button id="printBtn" onclick="window.print()">Imprimer / PDF</button>
   </div>
 
-  <footer>Calculateur personnel · Aéroclub de Haguenau · données des manuels de vol de chaque avion et carte VAC LFSH (AIRAC, AMDT 04/25)</footer>
+  <div class="hangar-quote" id="hangarQuote"></div>
+
+  <footer>Calculateur personnel · Aéroclub de Haguenau · données des manuels de vol de chaque avion</footer>
 
 </div>
 
@@ -509,6 +531,57 @@ if (!DB_OK){
 const AIRCRAFT = DB_OK ? window.PERF_DB.aircraft : {};
 const AIRFIELDS = DB_OK ? window.PERF_DB.airfields : {};
 const ICONS = DB_OK ? window.PERF_DB.icons : {};
+
+/* ==== Données du bac à sable (TEST) — à migrer vers db-flotte.js lors d'une
+   éventuelle promotion en prod, après validation des valeurs par Xavier. ==== */
+const TEST_EXTRA = {
+  /* Vent traversier maximal démontré (kt), par clé d'avion. Valeurs de POH
+     publiées couramment citées, PAS ENCORE recoupées avec les manuels du club :
+     l'UI les affiche avec la mention « à confirmer ». null = valeur inconnue,
+     aucune alerte pour cet avion. Le « max démontré » n'est pas une limitation
+     opérationnelle, c'est ce que le constructeur a démontré en essai. */
+  maxCrosswindKt: {
+    c172: 15,      /* POH C172S, section 4 : 15 kt demonstrated */
+    pa28: 17,      /* POH PA-28-181 Archer III : 17 kt demonstrated */
+    ps28: 12,      /* POH PS-28 Cruiser : 12 kt */
+    wt9_ulm: null, /* à relever dans le manuel du club */
+    wt9_lsa: null,
+    tetras: null,
+    savannah: null
+  },
+  /* Point de référence (ARP) de chaque terrain, décimal WGS84, transcrit de la
+     ligne LAT/LONG de la carte VAC correspondante (même AMDT que db-flotte.js).
+     Sert uniquement au calcul du coucher du soleil / nuit aéronautique. */
+  coords: {
+    LFSH: { lat: 48.7969, lon: 7.8192 },
+    LFST: { lat: 48.5419, lon: 7.6344 },
+    LFGC: { lat: 48.5536, lon: 7.7775 },
+    LFGY: { lat: 48.2664, lon: 7.0075 },
+    LFQY: { lat: 48.7533, lon: 7.4258 },
+    LFQP: { lat: 48.7681, lon: 7.2050 },
+    LFGT: { lat: 48.7183, lon: 7.0800 },
+    LFQU: { lat: 48.9508, lon: 7.0764 },
+    LFGA: { lat: 48.1103, lon: 7.3592 },
+    LFGB: { lat: 47.7372, lon: 7.4297 },
+    LFSB: { lat: 47.5900, lon: 7.5292 },
+    LFLJ: { lat: 45.3958, lon: 6.6325 },
+    LFHM: { lat: 45.8244, lon: 6.6483 }
+  },
+  /* Citations du hangar : proverbes de pilotes (folklore aéronautique,
+     reformulations maison), tirés au hasard à chaque chargement. */
+  quotes: [
+    "Un bon atterrissage, c'est quand tout le monde ressort de l'avion. Un excellent, c'est quand l'avion peut resservir.",
+    "Mieux vaut être en bas à regretter de ne pas être en l'air, que l'inverse.",
+    "Les trois choses les plus inutiles en aviation : le carburant resté au camion, la piste restée derrière soi, et l'altitude restée au-dessus.",
+    "L'hélice est un ventilateur qui sert à rafraîchir le pilote : la preuve, quand elle s'arrête, il se met à transpirer.",
+    "Décoller est facultatif. Atterrir est obligatoire.",
+    "Il y a de vieux pilotes et des pilotes audacieux, mais très peu de vieux pilotes audacieux.",
+    "La marge de sécurité ne sert à rien... jusqu'au jour où elle sert à tout.",
+    "Piloter d'abord, naviguer ensuite, communiquer enfin. Le café attendra le hangar.",
+    "Le seul nuage vraiment dangereux est celui qui cache une montagne.",
+    "En cas de doute, remets les gaz. Personne n'a jamais regretté une remise de gaz."
+  ]
+};
 
 let currentAircraft = 'wt9_ulm';
 
@@ -801,19 +874,13 @@ function fmt(n){ const r = Math.round(n) || 0; return r.toLocaleString('fr-FR');
 
 /* ---------- Runway SVG (realistic top-down look) ---------- */
 function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRight, iconKey, slopePct){
-  // A sloping runway (slopePct signed uphill-positive, see db-flotte.js) is drawn tilted at its
-  // true angle rather than an exaggerated one: 12% reads as a visibly steep ramp already.
-  // SVG y points down, so a downhill run (slopePct < 0) needs a positive, clockwise rotation.
-  const rot = -Math.atan((slopePct || 0) / 100) * 180 / Math.PI;
+  // Itération 2 du bac à sable : la piste est toujours dessinée à plat. L'inclinaison
+  // à l'angle réel gênait la lecture ; la pente reste signalée par la légende du bas
+  // et reste corrigée dans le calcul (slopeFactor). La légende « X m disponibles » a
+  // été remontée dans les métriques de la carte (champ « Disponible »).
   const rw = 700;
-  // Vertical room the tilt costs: the rotation is centred on the runway, so each end swings
-  // half the width times the sine. Added above AND below, which also keeps the runway centred.
-  const extra = Math.round(Math.abs(Math.sin(rot * Math.PI / 180)) * rw / 2);
-
-  // H leaves room under the runway for the runway number and the length caption at their
-  // current sizes; raise it before enlarging either, or they collide with the bottom edge.
-  const W = 800, H = 165 + 2 * extra;
-  const rx0 = 50, rx1 = 750, ry0 = 45 + extra, ry1 = 105 + extra;
+  const W = 800, H = 140;
+  const rx0 = 50, rx1 = 750, ry0 = 38, ry1 = 98;
   const cx = (rx0 + rx1) / 2, cy = (ry0 + ry1) / 2;
   const surfFill = surface === 'grass' ? '#5a8a44' : '#5b6472';
   const surfFill2 = surface === 'grass' ? '#4d7c3a' : '#4f5865';
@@ -824,14 +891,9 @@ function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRig
   const pctMargin = Math.min(1, distMargin / runwayLen);
   const xMargin = rx0 + rw * pctMargin;
 
-  // Text inside the tilted group is counter-rotated about its own anchor: it travels with the
-  // runway end it labels but stays horizontal and readable.
-  const flat = (x, y, inner) => `<g transform="rotate(${-rot} ${x} ${y})">${inner}</g>`;
-
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">`;
   // grass surroundings
   svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="#eef2ec"/>`;
-  svg += `<g transform="rotate(${rot} ${cx} ${cy})">`;
   // runway base
   svg += `<rect x="${rx0}" y="${ry0}" width="${rw}" height="${ry1-ry0}" fill="${surfFill}"/>`;
   // texture stripes
@@ -847,12 +909,11 @@ function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRig
   // centerline dashed
   svg += `<line x1="${rx0+40}" y1="${cy}" x2="${rx1-40}" y2="${cy}" stroke="#fff" stroke-width="3" stroke-dasharray="16 12" opacity="0.85"/>`;
   // runway numbers
-  svg += flat(rx0+2, ry1+24, `<text x="${rx0+2}" y="${ry1+24}" font-size="24" font-weight="700" fill="#334155">${numLeft||''}</text>`);
-  svg += flat(rx1-2, ry0-10, `<text x="${rx1-2}" y="${ry0-10}" font-size="24" font-weight="700" fill="#334155" text-anchor="end">${numRight||''}</text>`);
+  svg += `<text x="${rx0+2}" y="${ry1+24}" font-size="24" font-weight="700" fill="#334155">${numLeft||''}</text>`;
+  svg += `<text x="${rx1-2}" y="${ry0-10}" font-size="24" font-weight="700" fill="#334155" text-anchor="end">${numRight||''}</text>`;
   // distance used overlay
   svg += `<rect x="${rx0}" y="${ry0}" width="${xRaw-rx0}" height="${ry1-ry0}" fill="#2563eb" opacity="0.55"/>`;
-  // aircraft icon at raw-distance point — left in the tilted frame on purpose, so it sits on
-  // the slope the way the real aircraft does.
+  // aircraft icon at raw-distance point
   const iconSvgInner = (ICONS[iconKey]||ICONS.lowwing).replace('<svg viewBox="0 0 240 100" fill="none" xmlns="http://www.w3.org/2000/svg">','').replace('</svg>','');
   svg += `<g transform="translate(${xRaw-26} ${cy-11}) scale(0.22)" color="#0d2440">${iconSvgInner}</g>`;
   // margin marker
@@ -862,28 +923,206 @@ function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRig
     // SVG clips it. Past that point, hang the label on the other side of its marker instead.
     const tight = xMargin > rx1 - 70;
     const lx = tight ? xMargin - 6 : xMargin + 6;
-    svg += flat(lx, ry0-12, `<text x="${lx}" y="${ry0-12}" font-size="18" font-weight="700" fill="#0d2440"${tight ? ' text-anchor="end"' : ''}>marge</text>`);
+    svg += `<text x="${lx}" y="${ry0-12}" font-size="18" font-weight="700" fill="#0d2440"${tight ? ' text-anchor="end"' : ''}>marge</text>`;
   } else {
     svg += `<rect x="${rx1}" y="${ry0}" width="16" height="${ry1-ry0}" fill="url(#hatch)"/>`;
     // Sits below the runway, not above: above-right is where numRight already is, and the two
     // overlapped (measured) since both are end-anchored on rx1.
-    svg += flat(rx1-4, ry1+24, `<text x="${rx1-4}" y="${ry1+24}" font-size="18" font-weight="700" fill="#b91c1c" text-anchor="end">+${fmt(distMargin-runwayLen)} m hors piste</text>`);
+    svg += `<text x="${rx1-4}" y="${ry1+24}" font-size="18" font-weight="700" fill="#b91c1c" text-anchor="end">+${fmt(distMargin-runwayLen)} m hors piste</text>`;
   }
-  svg += `</g>`;
   svg += `<defs><pattern id="hatch" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="4" height="8" fill="#b91c1c"/></pattern></defs>`;
-  // Slope caption, outside the tilted group so it stays pinned to the top-left corner, which the
-  // runway never reaches at either sign of the tilt.
+  // Légende de pente, en bas à droite du numéro de piste : la zone est libre, le
+  // texte « hors piste » (droite) et le libellé « marge » (haut) ne l'atteignent pas.
   if (slopePct){
-    svg += `<text x="${rx0}" y="24" font-size="22" font-weight="700" fill="#b45309">${slopePct < 0 ? '↘' : '↗'} pente moyenne ${fmtSlope(slopePct)} ${slopePct < 0 ? 'descendante' : 'montante'}</text>`;
+    svg += `<text x="${rx0+60}" y="${H-6}" font-size="22" font-weight="700" fill="#b45309">${slopePct < 0 ? '↘' : '↗'} pente moyenne ${fmtSlope(slopePct)} ${slopePct < 0 ? 'descendante' : 'montante'}</text>`;
   }
-  // Runway length caption. Font sizes here are in viewBox units, not pixels: the 800-unit-wide
-  // viewBox renders at ~485 px, so everything is scaled to ~60%. 22 units ≈ 13 px on screen.
-  svg += `<text x="${cx}" y="${H-8}" font-size="27" font-weight="600" fill="#334155" text-anchor="middle">${fmt(runwayLen)} m disponibles</text>`;
   svg += `</svg>`;
   return svg;
 }
 
 function fmtSlope(pct){ return Math.abs(pct).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
+
+/* ---------- Rose des vents (TEST) ----------
+   Cadran style instrument, nord en haut : bande de piste orientée au QFU, flèche
+   de vent pointant du bord vers le centre (le vent VIENT de windDir), et les
+   composantes en afficheurs numériques sous le cadran (FACE/ARR et TRAV, ambre
+   si vent arrière ou traversier au-delà du max démontré de TEST_EXTRA). Couleurs
+   du thème cockpit, en dur car le SVG est construit en chaîne. */
+function buildWindRoseSvg(qfu, windDir, windSpeed, wind, maxX){
+  const C = 100, R = 88;
+  let ticks = '';
+  for (let a = 0; a < 360; a += 10){
+    const major = a % 30 === 0;
+    const r1 = R - (major ? 12 : 6);
+    const rad = (a - 90) * Math.PI / 180;
+    ticks += `<line x1="${(C + r1 * Math.cos(rad)).toFixed(1)}" y1="${(C + r1 * Math.sin(rad)).toFixed(1)}" ` +
+      `x2="${(C + R * Math.cos(rad)).toFixed(1)}" y2="${(C + R * Math.sin(rad)).toFixed(1)}" ` +
+      `stroke="#ece5d3" stroke-width="${major ? 2 : 1}" opacity="${major ? .85 : .45}"/>`;
+  }
+  let cards = '';
+  [['N',0],['E',90],['S',180],['W',270]].forEach(([t, a]) => {
+    const rad = (a - 90) * Math.PI / 180, r = R - 22;
+    cards += `<text x="${(C + r * Math.cos(rad)).toFixed(1)}" y="${(C + r * Math.sin(rad)).toFixed(1)}" ` +
+      `font-size="13" font-weight="700" fill="${t === 'N' ? '#57e08c' : '#a49e8f'}" ` +
+      `text-anchor="middle" dominant-baseline="central">${t}</text>`;
+  });
+  const head = wind ? wind.headwind : 0;
+  const runway = `<g transform="rotate(${qfu} ${C} ${C})">` +
+    `<rect x="${C - 9}" y="${C - 52}" width="18" height="104" rx="2" fill="#5b6472" stroke="#101317" stroke-width="1.5"/>` +
+    `<line x1="${C}" y1="${C - 40}" x2="${C}" y2="${C + 40}" stroke="#fff" stroke-width="1.6" stroke-dasharray="7 5" opacity=".8"/>` +
+    `<path d="M ${C - 5} ${C - 38} L ${C + 5} ${C - 38} L ${C} ${C - 48} Z" fill="#ece5d3" opacity=".9"/>` +
+    `</g>`;
+  let arrow = '';
+  if (windSpeed > 0){
+    arrow = `<g transform="rotate(${windDir} ${C} ${C})">` +
+      `<line x1="${C}" y1="14" x2="${C}" y2="30" stroke="#57e08c" stroke-width="3.5"/>` +
+      `<path d="M ${C - 6} 27 L ${C + 6} 27 L ${C} 40 Z" fill="#57e08c"/>` +
+      `</g>`;
+  }
+  const headTxt = head >= 0 ? `FACE ${fmt(head)} kt` : `ARR ${fmt(-head)} kt`;
+  const headCol = head >= 0 ? '#57e08c' : '#ffb84d';
+  const crossOver = maxX && wind && wind.crosswind > maxX;
+  const crossTxt = `TRAV ${fmt(wind ? wind.crosswind : 0)} kt` +
+    (wind && wind.crosswindSide ? (wind.crosswindSide === 'droite' ? ' D' : ' G') : '');
+  const crossCol = crossOver ? '#ffb84d' : '#57e08c';
+  const lcd = (x, txt, col) =>
+    `<rect x="${x}" y="206" width="92" height="24" rx="4" fill="#03130a" stroke="#1c2320" stroke-width="2"/>` +
+    `<text x="${x + 46}" y="222" font-size="12.5" font-weight="700" fill="${col}" text-anchor="middle">${txt}</text>`;
+  const caption = windSpeed > 0
+    ? `${String(Math.round(windDir)).padStart(3, '0')}° / ${fmt(windSpeed)} kt`
+    : 'vent calme';
+  return `<svg viewBox="0 0 200 252" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Consolas, monospace">` +
+    `<circle cx="${C}" cy="${C}" r="96" fill="#101317" stroke="#000" stroke-width="2"/>` +
+    `<circle cx="${C}" cy="${C}" r="${R}" fill="#0b0d10" stroke="#3a3e46" stroke-width="1.5"/>` +
+    ticks + cards + runway + arrow +
+    lcd(4, headTxt, headCol) + lcd(104, crossTxt, crossCol) +
+    `<text x="${C}" y="247" font-size="12" fill="#a49e8f" text-anchor="middle">${caption}</text>` +
+    `</svg>`;
+}
+
+/* ---------- Altimètre (TEST) ----------
+   Cadran style C172 : chiffres 0-9 (milliers de ft), aiguille longue pour les
+   centaines, courte pour les milliers, calées sur l'altitude PRESSION (c'est elle
+   que suit un vrai altimètre calé 1013). Les fenêtres digitales donnent l'altitude
+   pression et l'altitude densité, l'écart ISA est rappelé dessous. */
+function buildAltimeterSvg(paFt, daFt, isaDev){
+  const C = 100, R = 88;
+  let marks = '';
+  for (let i = 0; i < 50; i++){
+    const major = i % 5 === 0;
+    const rad = (i * 7.2 - 90) * Math.PI / 180;
+    const r1 = R - (major ? 14 : 7);
+    marks += `<line x1="${(C + r1 * Math.cos(rad)).toFixed(1)}" y1="${(C + r1 * Math.sin(rad)).toFixed(1)}" ` +
+      `x2="${(C + R * Math.cos(rad)).toFixed(1)}" y2="${(C + R * Math.sin(rad)).toFixed(1)}" ` +
+      `stroke="#ece5d3" stroke-width="${major ? 2.4 : 1}" opacity="${major ? .9 : .5}"/>`;
+  }
+  let nums = '';
+  for (let n = 0; n < 10; n++){
+    const rad = (n * 36 - 90) * Math.PI / 180, r = R - 27;
+    nums += `<text x="${(C + r * Math.cos(rad)).toFixed(1)}" y="${(C + r * Math.sin(rad)).toFixed(1)}" ` +
+      `font-size="17" font-weight="700" fill="#ece5d3" text-anchor="middle" dominant-baseline="central">${n}</text>`;
+  }
+  // Aiguilles vertes = altitude PRESSION (courte : milliers, longue : centaines).
+  // Aiguille orange = altitude DENSITÉ sur l'échelle des MILLIERS, comme la courte
+  // verte : pour 1 827 ft elle pointe juste avant le 2, ce que l'œil attend d'une
+  // aiguille unique (sur l'échelle des centaines, elle semblait indiquer 8 000).
+  const aLong = (((paFt % 1000) + 1000) % 1000) / 1000 * 360;
+  const aShort = paFt / 10000 * 360;
+  const aDa = daFt / 10000 * 360;
+  const needles =
+    `<g transform="rotate(${aShort.toFixed(1)} ${C} ${C})">` +
+      `<path d="M ${C - 4} ${C + 8} L ${C + 4} ${C + 8} L ${C + 2.5} ${C - 40} L ${C - 2.5} ${C - 40} Z" fill="#57e08c"/>` +
+    `</g>` +
+    `<g transform="rotate(${aLong.toFixed(1)} ${C} ${C})">` +
+      `<path d="M ${C - 3} ${C + 10} L ${C + 3} ${C + 10} L ${C + 1.2} ${C - 64} L ${C - 1.2} ${C - 64} Z" fill="#57e08c"/>` +
+    `</g>` +
+    `<g transform="rotate(${aDa.toFixed(1)} ${C} ${C})">` +
+      `<path d="M ${C - 1.6} ${C + 8} L ${C + 1.6} ${C + 8} L ${C + 0.9} ${C - 56} L ${C - 0.9} ${C - 56} Z" fill="#ffb84d"/>` +
+    `</g>` +
+    `<circle cx="${C}" cy="${C}" r="5" fill="#31353c" stroke="#000"/>`;
+  const lcd = (x, txt, col) =>
+    `<rect x="${x}" y="206" width="92" height="24" rx="4" fill="#03130a" stroke="#1c2320" stroke-width="2"/>` +
+    `<text x="${x + 46}" y="222" font-size="12.5" font-weight="700" fill="${col}" text-anchor="middle">${txt}</text>`;
+  return `<svg viewBox="0 0 200 252" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Consolas, monospace">` +
+    `<circle cx="${C}" cy="${C}" r="96" fill="#101317" stroke="#000" stroke-width="2"/>` +
+    `<circle cx="${C}" cy="${C}" r="${R}" fill="#0b0d10" stroke="#3a3e46" stroke-width="1.5"/>` +
+    marks + nums +
+    `<text x="${C}" y="${C - 46}" font-size="9" fill="#a49e8f" text-anchor="middle">ALT · FEET</text>` +
+    needles +
+    lcd(4, `PA ${fmt(paFt)} ft`, '#57e08c') + lcd(104, `DA ${fmt(daFt)} ft`, '#ffb84d') +
+    `<text x="${C}" y="247" font-size="12" fill="#a49e8f" text-anchor="middle">ISA ${isaDev >= 0 ? '+' : '−'}${Math.abs(Math.round(isaDev))} °C</text>` +
+    `</svg>`;
+}
+
+/* ---------- Montre jour/nuit aéronautiques (TEST) ----------
+   Cadran 24 h façon montre d'aviateur : minuit en bas, midi en haut, une
+   graduation par heure. L'arc vert couvre le jour aéronautique (lever − 30 min
+   → coucher + 30 min), l'aiguille ambre indique l'heure actuelle. Afficheurs
+   digitaux JOUR / NUIT sous le cadran. */
+function buildNightClockSvg(day, night, now){
+  const C = 100, R = 88;
+  const ang = d => (d.getHours() + d.getMinutes() / 60) / 24 * 360 + 180;
+  const pt = (a, r) => {
+    const rad = (a - 90) * Math.PI / 180;
+    return [(C + r * Math.cos(rad)).toFixed(1), (C + r * Math.sin(rad)).toFixed(1)];
+  };
+  let ticks = '';
+  for (let h = 0; h < 24; h++){
+    const major = h % 6 === 0;
+    const a = h / 24 * 360 + 180;
+    const [x1, y1] = pt(a, R - (major ? 12 : 6));
+    const [x2, y2] = pt(a, R);
+    ticks += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#ece5d3" stroke-width="${major ? 2 : 1}" opacity="${major ? .85 : .45}"/>`;
+  }
+  let nums = '';
+  [0, 6, 12, 18].forEach(h => {
+    const [x, y] = pt(h / 24 * 360 + 180, R - 24);
+    nums += `<text x="${x}" y="${y}" font-size="13" font-weight="700" fill="#a49e8f" text-anchor="middle" dominant-baseline="central">${String(h).padStart(2, '0')}</text>`;
+  });
+  // Arc du jour aéro, parcouru dans le sens horaire du début du jour au début de la nuit
+  const a1 = ang(day), a2 = ang(night);
+  const delta = (a2 - a1 + 360) % 360;
+  const [ax1, ay1] = pt(a1, 72), [ax2, ay2] = pt(a2, 72);
+  const arc = `<path d="M ${ax1} ${ay1} A 72 72 0 ${delta > 180 ? 1 : 0} 1 ${ax2} ${ay2}" fill="none" stroke="#57e08c" stroke-width="7" stroke-linecap="round" opacity=".8"/>`;
+  // Aiguille de l'heure actuelle
+  const [hx, hy] = pt(ang(now), 62);
+  const hand = `<line x1="${C}" y1="${C}" x2="${hx}" y2="${hy}" stroke="#ffb84d" stroke-width="3.5" stroke-linecap="round"/>` +
+    `<circle cx="${C}" cy="${C}" r="5" fill="#31353c" stroke="#000"/>`;
+  const fmtT = d => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const lcd = (x, txt, col) =>
+    `<rect x="${x}" y="206" width="92" height="24" rx="4" fill="#03130a" stroke="#1c2320" stroke-width="2"/>` +
+    `<text x="${x + 46}" y="222" font-size="12.5" font-weight="700" fill="${col}" text-anchor="middle">${txt}</text>`;
+  return `<svg viewBox="0 0 200 252" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Consolas, monospace">` +
+    `<circle cx="${C}" cy="${C}" r="96" fill="#101317" stroke="#000" stroke-width="2"/>` +
+    `<circle cx="${C}" cy="${C}" r="${R}" fill="#0b0d10" stroke="#3a3e46" stroke-width="1.5"/>` +
+    ticks + nums + arc + hand +
+    lcd(4, `JOUR ${fmtT(day)}`, '#57e08c') + lcd(104, `NUIT ${fmtT(night)}`, '#ffb84d') +
+    `<text x="${C}" y="247" font-size="12" fill="#a49e8f" text-anchor="middle">maintenant ${fmtT(now)}</text>` +
+    `</svg>`;
+}
+
+/* ---------- Lever et coucher du soleil (TEST) ----------
+   Algorithme NOAA simplifié : renvoie les minutes UTC depuis 00:00 du lever et du
+   coucher (zénith 90,833° = réfraction standard + demi-diamètre solaire). Précision
+   de l'ordre de la minute aux latitudes françaises, largement suffisante ici. */
+function sunTimesUTC(date, lat, lon){
+  const rad = Math.PI / 180;
+  const doy = Math.floor((date.getTime() - Date.UTC(date.getUTCFullYear(), 0, 0)) / 86400000);
+  const gamma = 2 * Math.PI / 365 * (doy - 1 + 0.5);
+  const eqtime = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma)
+    - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+  const decl = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma)
+    - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma)
+    - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
+  const cosHa = Math.cos(90.833 * rad) / (Math.cos(lat * rad) * Math.cos(decl))
+    - Math.tan(lat * rad) * Math.tan(decl);
+  if (cosHa < -1 || cosHa > 1) return null; // jour ou nuit polaire : sans objet en France
+  const ha = Math.acos(cosHa) / rad;
+  return {
+    sunrise: 720 - 4 * (lon + ha) - eqtime,
+    sunset: 720 - 4 * (lon - ha) - eqtime
+  };
+}
 
 /* Bandeau altiport, affiché sous le sélecteur de piste (af.altiport dans la base).
    Appeler avec (null, null) pour le masquer. */
@@ -909,7 +1148,7 @@ function renderAltiportBanner(af, rw){
 
 /* Manœuvre non autorisée sur ce QFU (toda/lda = 0 dans la base, ex LFSB piste 07) */
 function renderProhibited(prefix, msg){
-  ['Roll','Dist','Margin'].forEach(k => document.getElementById(prefix + k).textContent = '–');
+  ['Roll','Dist','Margin','Avail'].forEach(k => document.getElementById(prefix + k).textContent = '–');
   document.getElementById(prefix + 'Viz').innerHTML = '';
   const badge = document.getElementById(prefix + 'Status');
   badge.className = 'status-badge status-bad';
@@ -1027,22 +1266,45 @@ function recompute(){
   const paFt = pressureAltitude(elevFt, qnh);
   const daFt = paFt + 120 * (temp - isaTemp(paFt));
   const rwyTxt = numLeft ? ' — piste ' + numLeft : '';
-  const headLbl = document.getElementById('windHeadLabel');
-  const headVal = document.getElementById('windHeadValue');
-  if (wind.headwind >= 0){
-    headLbl.textContent = 'Vent de face' + rwyTxt;
-    headVal.textContent = fmt(wind.headwind) + ' kt';
-    headVal.style.color = '';
+
+  // Instrument vent / ILS (TEST) : composantes en aiguilles et afficheurs, alerte
+  // traversier max démontré en sous-ligne (valeurs POH à confirmer, cf. TEST_EXTRA)
+  const maxX = TEST_EXTRA.maxCrosswindKt[currentAircraft];
+  document.getElementById('windRoseLabel').textContent = 'Vent' + rwyTxt;
+  document.getElementById('windRose').innerHTML = buildWindRoseSvg(qfu, windDir, windSpeed, wind, maxX);
+  const xWarnEl = document.getElementById('windCrossWarn');
+  if (maxX && wind.crosswind > maxX){
+    xWarnEl.className = 'tile-sub warn';
+    xWarnEl.textContent = `⚠ Traversier au-delà du max démontré (${maxX} kt, POH — à confirmer au manuel du club)`;
   } else {
-    headLbl.textContent = 'Vent arrière' + rwyTxt;
-    headVal.textContent = fmt(-wind.headwind) + ' kt';
-    headVal.style.color = 'var(--amber)';
+    xWarnEl.className = 'tile-sub';
+    xWarnEl.textContent = maxX ? `Traversier max démontré : ${maxX} kt (POH, à confirmer)` : '';
   }
-  document.getElementById('windCrossLabel').textContent =
-    'Vent traversier' + (wind.crosswindSide ? ' (' + wind.crosswindSide + ')' : '') + rwyTxt;
-  document.getElementById('windCrossValue').textContent = fmt(wind.crosswind) + ' kt';
-  document.getElementById('paValue').textContent = fmt(paFt) + ' ft';
-  document.getElementById('daValue').textContent = fmt(daFt) + ' ft';
+
+  // Altimètre (TEST) : aiguilles sur l'altitude pression, fenêtres PA / DA
+  const isaDev = temp - isaTemp(paFt);
+  document.getElementById('altimeter').innerHTML = buildAltimeterSvg(paFt, daFt, isaDev);
+
+  // Jour et nuit aéronautiques (TEST) : lever − 30 min / coucher + 30 min au
+  // terrain sélectionné, masqués en terrain personnalisé (pas de coordonnées)
+  const nightTile = document.getElementById('nightTile');
+  const coords = airport !== 'custom' ? TEST_EXTRA.coords[airport] : null;
+  const sun = coords ? sunTimesUTC(new Date(), coords.lat, coords.lon) : null;
+  if (sun){
+    const now = new Date();
+    const mkT = min => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, Math.round(min * 60)));
+    const fmtT = d => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const sunrise = mkT(sun.sunrise), sunset = mkT(sun.sunset);
+    const day = new Date(sunrise.getTime() - 30 * 60000);
+    const night = new Date(sunset.getTime() + 30 * 60000);
+    nightTile.style.display = '';
+    document.getElementById('nightLabel').textContent = `Jour / nuit aéro — ${airport}`;
+    document.getElementById('nightClock').innerHTML = buildNightClockSvg(day, night, now);
+    document.getElementById('nightSub').textContent =
+      `Lever ${fmtT(sunrise)} − 30 min · coucher ${fmtT(sunset)} + 30 min · aujourd'hui, heure locale`;
+  } else {
+    nightTile.style.display = 'none';
+  }
 
   // Reference captions
   document.getElementById('toRef').textContent = `Volets ${ac.toFlaps} · masse ${ac.mtow} kg · réf. manuel : ${ac.refDesc}`;
@@ -1059,6 +1321,7 @@ function recompute(){
     document.getElementById('toDist').textContent = fmt(to.dist15) + ' m';
     const toMarginVal = to.dist15 * margin;
     document.getElementById('toMargin').textContent = fmt(toMarginVal) + ' m';
+    document.getElementById('toAvail').textContent = fmt(toda) + ' m';
     document.getElementById('toViz').innerHTML = buildRunwaySvg(toda, to.dist15, toMarginVal, surface, numLeft, numRight, ac.icon, slopePct);
     const toSt = statusFor(to.dist15, toMarginVal, toda);
     const toBadge = document.getElementById('toStatus');
@@ -1079,6 +1342,7 @@ function recompute(){
     document.getElementById('ldDist').textContent = fmt(ld.dist15) + ' m';
     const ldMarginVal = ld.dist15 * margin;
     document.getElementById('ldMargin').textContent = fmt(ldMarginVal) + ' m';
+    document.getElementById('ldAvail').textContent = fmt(lda) + ' m';
     document.getElementById('ldViz').innerHTML = buildRunwaySvg(lda, ld.dist15, ldMarginVal, surface, numLeft, numRight, ac.icon, slopePct);
     const ldSt = statusFor(ld.dist15, ldMarginVal, lda);
     const ldBadge = document.getElementById('ldStatus');
@@ -1115,14 +1379,58 @@ function recompute(){
     <p><strong>Altitude densité</strong> (affichée à titre indicatif) ≈ altitude pression + 120 ft par °C d'écart à la température standard, approximation usuelle. Le calcul des distances n'utilise pas cette valeur : il applique directement les facteurs altitude pression et écart ISA ci-dessus.</p>
     <p><strong>Direction du vent</strong> : le vent d'un METAR est exprimé par rapport au nord vrai, alors que le QFU de piste est magnétique. La déclinaison magnétique locale (environ 2° E en Alsace) est négligeable devant la précision de ce modèle : aucune correction n'est appliquée aux composantes de vent affichées.</p>
     <p><strong>Marge de sécurité</strong> : facteur multiplicatif appliqué à la distance corrigée (passage 15 m), réglable. Valeur par défaut 1,2, soit la majoration de 20 % couramment enseignée en aviation légère ; aucun facteur n'est imposé en VFR privé, le choix reste celui du commandant de bord. Attention à ne pas la confondre avec le passage des 15 m : celui-ci n'est pas une réserve, c'est la distance réellement nécessaire pour franchir un obstacle de 15 m. La marge couvre autre chose — l'écart entre le manuel (avion neuf, pilote d'essai, piste idéale) et la réalité du jour (usure moteur, technique, état de la piste), ainsi que l'imprécision des corrections extrapolées de cet outil.</p>
+    <p><strong>Ajouts de la version TEST.</strong> <em>Instrument vent</em> : bande de piste au QFU sélectionné, flèche indiquant d'où vient le vent, composantes en afficheurs numériques (FACE/ARR et TRAV) ; mêmes conventions que le reste de l'outil (vent vrai du METAR vs QFU magnétique, écart négligé). <em>Traversier max démontré</em> : valeurs de POH publiées (C172S 15 kt, PA-28-181 17 kt, PS-28 12 kt), pas encore recoupées avec les manuels du club, d'où la mention « à confirmer » ; aucun affichage pour les avions non renseignés. Le max démontré n'est pas une limitation opérationnelle : c'est la composante démontrée en essais par le constructeur. <em>Altimètre</em> : les aiguilles vertes suivent l'altitude pression (courte : milliers de ft, longue : centaines, comme un altimètre calé 1013) ; l'aiguille orange indique l'altitude densité en milliers de ft, sur la même échelle que la courte verte ; les fenêtres digitales rappellent les deux valeurs. <em>Montre jour/nuit</em> : cadran 24 h (minuit en bas, midi en haut), arc vert = jour aéronautique, aiguille ambre = heure actuelle ; lever et coucher du soleil calculés hors-ligne (algorithme NOAA, précision ≈ 1 min) aux coordonnées ARP relevées sur la carte VAC du terrain ; jour aéro = lever − 30 min, nuit aéro = coucher + 30 min (définition réglementaire en métropole) ; valable pour la date du jour, heure locale de l'appareil ; ne remplace pas les éphémérides officielles.</p>
   `;
+
+  saveSettings();
+}
+
+/* ---------- Persistance des réglages (TEST) ----------
+   Retrouver son avion, son terrain et sa marge d'une session à l'autre, sur le
+   téléphone au bord de la piste. try/catch : localStorage peut être indisponible
+   (navigation privée, certains contextes file://) et l'appli doit marcher sans. */
+const TEST_STORE = 'perfAvionsTEST';
+function saveSettings(){
+  try {
+    localStorage.setItem(TEST_STORE, JSON.stringify({
+      aircraft: currentAircraft,
+      airport: document.getElementById('airport').value,
+      runway: document.getElementById('runway').value,
+      margin: document.getElementById('margin').value
+    }));
+  } catch (e) { /* pas de persistance, pas de drame */ }
+}
+function restoreSettings(){
+  try {
+    const s = JSON.parse(localStorage.getItem(TEST_STORE) || 'null');
+    if (!s) return;
+    if (AIRCRAFT[s.aircraft]) currentAircraft = s.aircraft;
+    const ap = document.getElementById('airport');
+    if (s.airport && [...ap.options].some(o => o.value === s.airport)){
+      ap.value = s.airport;
+      if (s.airport !== 'custom'){
+        buildRunwayPicker();
+        const rw = document.getElementById('runway');
+        if ([...rw.options].some(o => o.value === s.runway)) rw.value = s.runway;
+      }
+    }
+    if (s.margin) document.getElementById('margin').value = s.margin;
+  } catch (e) { /* réglages par défaut */ }
 }
 
 if (DB_OK){
   buildAirportPicker();
+  restoreSettings();
   buildAircraftPicker();
-  recompute();
+  onAirportChange();   // gère l'affichage terrain personnalisé et lance recompute()
 }
+
+/* ---------- Citation du hangar (TEST) ----------
+   Un aphorisme de pilote au hasard à chaque chargement, au-dessus du pied de
+   page : jamais sur le chemin des résultats. */
+document.getElementById('hangarQuote').textContent =
+  'Citation du hangar — « ' + TEST_EXTRA.quotes[Math.floor(Math.random() * TEST_EXTRA.quotes.length)] + ' »';
+
 
 /* ---------- Service worker (mode hors-ligne + bandeau de mise à jour) ----------
    Volontairement en dehors du garde-fou DB_OK : le hors-ligne ne dépend pas de

@@ -6,7 +6,7 @@
    ne change pas, les téléphones déjà installés resservent l'ancienne version.
    Un calculateur de perfos figé sur de vieilles données, c'est le scénario à
    éviter. */
-const CACHE = 'perf-avions-v3';
+const CACHE = 'perf-avions-v4';
 
 /* Les photos d'avions vivent dans un dossier au nom espacé, et sont déclarées
    avec l'espace encodé (%20) dans db-flotte.js. Une clé de cache se compare

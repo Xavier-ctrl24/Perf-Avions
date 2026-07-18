@@ -35,8 +35,15 @@
                        s'affiche pas,
      "toFlaps":        volets décollage (texte affiché),
      "ldgFlaps":       volets atterrissage (texte affiché),
-     "crosswindLimit": vent traversier démontré (kt), null si inconnu
-                       (champ documentaire, non utilisé par le calcul),
+     "crosswindLimit": vent traversier démontré (kt), null si inconnu.
+                       Non utilisé par le calcul des distances, mais affiché
+                       par l'instrument vent, qui passe en alerte ambre si le
+                       traversier calculé dépasse cette valeur. Ce n'est pas
+                       une limitation opérationnelle : c'est la composante
+                       démontrée en essais par le constructeur. WT9 : manuel
+                       du club ; C172/PA-28/PS-28 : POH publiés de ces types,
+                       PAS ENCORE recoupés avec les manuels du club (statut
+                       « à confirmer » disclosé dans le panneau méthode),
      "ref":            condition de référence du manuel pour les perfos :
                        { "elevFt": altitude-pression, "tempC": température,
                          "headwindKt": vent de face (négatif = arrière) }.
@@ -66,6 +73,12 @@
      "elevFt":          altitude du terrain (ft) ; sur une piste en pente,
                         retenir l'altitude la plus HAUTE (ALT SUP de la VAC),
                         qui est le choix le plus pénalisant donc le plus sûr,
+     "arp":             point de référence du terrain (ARP), décimal WGS84
+                        { "lat": ..., "lon": ... }, transcrit de la ligne
+                        LAT/LONG de la carte VAC citée en "source". Sert
+                        uniquement au calcul du lever/coucher du soleil de la
+                        montre jour/nuit (précision requise : le dixième de
+                        degré suffit largement),
      "altiport":        facultatif — true si altiport/altisurface : déclenche
                         le bandeau orange d'avertissement, la piste inclinée
                         sur le schéma, et remplace la suggestion de piste au
@@ -101,6 +114,11 @@
    Les distances TODA/LDA sont celles du tableau de la carte VAC ;
    exception LFSB 15/33 : valeurs VFR avions <= 5,7 t des consignes
    particulières (TXT), plus pertinentes ici que la pleine piste.
+
+   ---------------------------------------------------------------------
+   SECTION "quotes" : citations du hangar (folklore aéronautique,
+   reformulations maison), affichées au hasard au-dessus du pied de page.
+   Aucun rôle dans le calcul.
    ===================================================================== */
 
 window.PERF_DB = {
@@ -132,7 +150,7 @@ window.PERF_DB = {
     "ps28": {
       "name": "PS-28 Cruiser", "mtow": 600,
       "info": { "maker": "Czech Sport Aircraft", "model": "PS-28 Cruiser", "engine": "BRP-Powertrain 912S2", "power": "98 hp", "cruise": "170 km/h" },
-      "toFlaps": "12°", "ldgFlaps": "30°", "crosswindLimit": null,
+      "toFlaps": "12°", "ldgFlaps": "30°", "crosswindLimit": 12,
       "ref": { "elevFt": 0, "tempC": 15, "headwindKt": 0 },
       "refDesc": "niveau de la mer, ISA (15 °C), vent nul",
       "takeoff": { "paved": { "roll": 141, "dist15": 387 }, "grass": { "roll": 214, "dist15": 457 } },
@@ -143,7 +161,7 @@ window.PERF_DB = {
     "c172": {
       "name": "Cessna 172", "mtow": 1158,
       "info": { "maker": "Cessna", "model": "172S", "engine": "Lycoming IO-360-L2A", "power": "180 hp", "cruise": "230 km/h" },
-      "toFlaps": "réf. manuel", "ldgFlaps": "réf. manuel", "crosswindLimit": null,
+      "toFlaps": "réf. manuel", "ldgFlaps": "réf. manuel", "crosswindLimit": 15,
       "ref": { "elevFt": 0, "tempC": 15, "headwindKt": 0 },
       "refDesc": "niveau de la mer, ISA (15 °C), vent nul",
       "takeoff": { "paved": { "roll": 293, "dist15": 497 }, "grass": null },
@@ -154,7 +172,7 @@ window.PERF_DB = {
     "pa28": {
       "name": "PA-28-181 Archer III", "mtow": 1157,
       "info": { "maker": "Piper", "model": "PA-28-181 Archer III", "engine": "Lycoming O-360-A4M", "power": "180 hp", "cruise": "230 km/h" },
-      "toFlaps": "25°", "ldgFlaps": "40°", "crosswindLimit": null,
+      "toFlaps": "25°", "ldgFlaps": "40°", "crosswindLimit": 17,
       "ref": { "elevFt": 0, "tempC": 15, "headwindKt": 0 },
       "refDesc": "niveau de la mer, ISA (15 °C), vent nul",
       "takeoff": { "paved": { "roll": 351, "dist15": 489.5 }, "grass": null },
@@ -191,6 +209,7 @@ window.PERF_DB = {
     "LFSH": {
       "name": "Haguenau (LFSH)",
       "elevFt": 491,
+      "arp": { "lat": 48.7969, "lon": 7.8192 },
       "preferredRunway": "03",
       "preferredNote": "QFU préférentiel bruit",
       "runways": [
@@ -204,6 +223,7 @@ window.PERF_DB = {
     "LFST": {
       "name": "Strasbourg-Entzheim (LFST)",
       "elevFt": 505,
+      "arp": { "lat": 48.5419, "lon": 7.6344 },
       "runways": [
         { "num": "05", "recip": "23", "qfu": 46,  "surface": "paved", "toda": 2695, "lda": 2400 },
         { "num": "23", "recip": "05", "qfu": 226, "surface": "paved", "toda": 2600, "lda": 2400 }
@@ -214,6 +234,7 @@ window.PERF_DB = {
     "LFGC": {
       "name": "Strasbourg-Neuhof (LFGC)",
       "elevFt": 459,
+      "arp": { "lat": 48.5536, "lon": 7.7775 },
       "preferredRunway": "17L",
       "preferredNote": "QFU 173° préférentiel bruit",
       "runways": [
@@ -226,6 +247,7 @@ window.PERF_DB = {
     "LFGY": {
       "name": "Saint-Dié Remomeix (LFGY)",
       "elevFt": 1187,
+      "arp": { "lat": 48.2664, "lon": 7.0075 },
       "runways": [
         { "num": "07", "recip": "25", "qfu": 67,  "surface": "paved", "toda": 870, "lda": 870 },
         { "num": "25", "recip": "07", "qfu": 247, "surface": "paved", "toda": 870, "lda": 870 }
@@ -235,6 +257,7 @@ window.PERF_DB = {
     "LFQY": {
       "name": "Saverne Steinbourg (LFQY)",
       "elevFt": 623,
+      "arp": { "lat": 48.7533, "lon": 7.4258 },
       "runways": [
         { "num": "15", "recip": "33", "qfu": 151, "surface": "grass", "toda": 665, "lda": 665 },
         { "num": "33", "recip": "15", "qfu": 331, "surface": "grass", "toda": 665, "lda": 665 }
@@ -245,6 +268,7 @@ window.PERF_DB = {
     "LFQP": {
       "name": "Phalsbourg Bourscheid (LFQP)",
       "elevFt": 1018,
+      "arp": { "lat": 48.7681, "lon": 7.2050 },
       "runways": [
         { "num": "06", "recip": "24", "qfu": 54,  "surface": "paved", "toda": 2502, "lda": 1203 },
         { "num": "24", "recip": "06", "qfu": 234, "surface": "paved", "toda": 2502, "lda": 2202 }
@@ -255,6 +279,7 @@ window.PERF_DB = {
     "LFGT": {
       "name": "Sarrebourg Buhl (LFGT)",
       "elevFt": 873,
+      "arp": { "lat": 48.7183, "lon": 7.0800 },
       "runways": [
         { "num": "04",  "recip": "22",  "qfu": 40,  "surface": "paved", "toda": 744, "lda": 744 },
         { "num": "22",  "recip": "04",  "qfu": 220, "surface": "paved", "toda": 744, "lda": 744 },
@@ -266,6 +291,7 @@ window.PERF_DB = {
     "LFQU": {
       "name": "Sarre-Union (LFQU)",
       "elevFt": 842,
+      "arp": { "lat": 48.9508, "lon": 7.0764 },
       "runways": [
         { "num": "08",  "recip": "26",  "qfu": 80,  "surface": "paved", "toda": 900, "lda": 765 },
         { "num": "26",  "recip": "08",  "qfu": 260, "surface": "paved", "toda": 900, "lda": 900 },
@@ -278,6 +304,7 @@ window.PERF_DB = {
     "LFGA": {
       "name": "Colmar Houssen (LFGA)",
       "elevFt": 627,
+      "arp": { "lat": 48.1103, "lon": 7.3592 },
       "runways": [
         { "num": "01", "recip": "19", "qfu": 9,   "surface": "paved", "toda": 1610, "lda": 1400 },
         { "num": "19", "recip": "01", "qfu": 189, "surface": "paved", "toda": 1610, "lda": 1610 },
@@ -290,6 +317,7 @@ window.PERF_DB = {
     "LFGB": {
       "name": "Mulhouse Habsheim (LFGB)",
       "elevFt": 789,
+      "arp": { "lat": 47.7372, "lon": 7.4297 },
       "runways": [
         { "num": "02",  "recip": "20",  "qfu": 19,  "surface": "paved", "toda": 1000, "lda": 1000 },
         { "num": "20",  "recip": "02",  "qfu": 199, "surface": "paved", "toda": 1000, "lda": 925 },
@@ -303,6 +331,7 @@ window.PERF_DB = {
     "LFSB": {
       "name": "Bâle-Mulhouse (LFSB)",
       "elevFt": 885,
+      "arp": { "lat": 47.5900, "lon": 7.5292 },
       "runways": [
         { "num": "15", "recip": "33", "qfu": 152, "surface": "paved", "toda": 2470, "lda": 2370 },
         { "num": "33", "recip": "15", "qfu": 332, "surface": "paved", "toda": 2500, "lda": 2780 },
@@ -315,6 +344,7 @@ window.PERF_DB = {
     "LFLJ": {
       "name": "Courchevel (LFLJ) — altiport",
       "elevFt": 6583,
+      "arp": { "lat": 45.3958, "lon": 6.6325 },
       "altiport": true,
       "runways": [
         { "num": "04", "recip": "22", "qfu": 42,  "surface": "paved", "toda": 536, "lda": 0,   "slopePct": -12.0 },
@@ -326,6 +356,7 @@ window.PERF_DB = {
     "LFHM": {
       "name": "Megève (LFHM) — altiport",
       "elevFt": 4830,
+      "arp": { "lat": 45.8244, "lon": 6.6483 },
       "altiport": true,
       "runways": [
         { "num": "15", "recip": "33", "qfu": 153, "surface": "paved", "toda": 0,   "lda": 520, "slopePct": 7.4 },
@@ -335,6 +366,21 @@ window.PERF_DB = {
       "remarks": "ALTIPORT, usage restreint. Qualification montagne (roues et/ou skis) ou autorisation de site obligatoire pour les pilotes avion ; cursus montagne FFPLUM fortement conseillé en ULM. Décollage piste 33 et atterrissage piste 15 seuls publiés au tableau des distances déclarées. LDA 15 = 520 m, réduite cause obstacle à l'extrémité supérieure de la bande de piste. TODA 33 = 548 m (ASDA 625 m grâce au SWY de 72 m en prolongement bas, non utilisable au décollage). Profil en long VAC : 396 m à 7 %, 122 m à 9,3 %, 30 m à 3,8 %. Câbles de téléphérique non balisés à proximité des circuits. elevFt = ALT SUP (choix pénalisant)."
     }
   },
+
+  /* Citations du hangar : proverbes de pilotes (folklore aéronautique,
+     reformulations maison), tirés au hasard à chaque chargement. */
+  "quotes": [
+    "Un bon atterrissage, c'est quand tout le monde ressort de l'avion. Un excellent, c'est quand l'avion peut resservir.",
+    "Mieux vaut être en bas à regretter de ne pas être en l'air, que l'inverse.",
+    "Les trois choses les plus inutiles en aviation : le carburant resté au camion, la piste restée derrière soi, et l'altitude restée au-dessus.",
+    "L'hélice est un ventilateur qui sert à rafraîchir le pilote : la preuve, quand elle s'arrête, il se met à transpirer.",
+    "Décoller est facultatif. Atterrir est obligatoire.",
+    "Il y a de vieux pilotes et des pilotes audacieux, mais très peu de vieux pilotes audacieux.",
+    "La marge de sécurité ne sert à rien... jusqu'au jour où elle sert à tout.",
+    "Piloter d'abord, naviguer ensuite, communiquer enfin. Le café attendra le hangar.",
+    "Le seul nuage vraiment dangereux est celui qui cache une montagne.",
+    "En cas de doute, remets les gaz. Personne n'a jamais regretté une remise de gaz."
+  ],
 
   /* Silhouettes SVG schématiques (vue de côté), non JSON-compatibles. */
   "icons": {
