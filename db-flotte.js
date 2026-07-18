@@ -153,7 +153,7 @@ window.PERF_DB = {
     },
     "pa28": {
       "name": "PA-28-181 Archer III", "mtow": 1157,
-      "info": { "maker": "Piper", "model": "PA-28-181 Archer III", "engine": "Lycoming IO-360-A4M", "power": "180 hp", "cruise": "230 km/h" },
+      "info": { "maker": "Piper", "model": "PA-28-181 Archer III", "engine": "Lycoming O-360-A4M", "power": "180 hp", "cruise": "230 km/h" },
       "toFlaps": "25°", "ldgFlaps": "40°", "crosswindLimit": null,
       "ref": { "elevFt": 0, "tempC": 15, "headwindKt": 0 },
       "refDesc": "niveau de la mer, ISA (15 °C), vent nul",
