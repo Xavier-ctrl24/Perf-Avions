@@ -64,8 +64,10 @@
     margin-bottom:18px;
   }
   .brand{display:flex;align-items:center;gap:16px;min-width:0;}
+  /* Dimensions fixes plutôt que width:auto : l'icône est un SVG carré, et un SVG
+     n'a de dimension intrinsèque que si la balise porte width/height. */
   .logo{
-    height:64px;width:auto;flex:none;border-radius:10px;
+    height:64px;width:64px;flex:none;border-radius:10px;
     border:1px solid #000;
     box-shadow:0 2px 8px rgba(0,0,0,.55), 0 0 0 2px var(--line);
   }
@@ -351,7 +353,8 @@
 
   <header>
     <div class="brand">
-      <img src="logo-test.svg" class="logo" alt="Logo Perf Avions (essai)">
+      <!-- Même icône que le favicon et que les deux applis : identité unique. -->
+      <img src="icons/icon.svg" class="logo" alt="">
       <h1>Takeoff / Landing Performance</h1>
     </div>
   </header>

@@ -6,7 +6,7 @@
    ne change pas, les téléphones déjà installés resservent l'ancienne version.
    Un calculateur de perfos figé sur de vieilles données, c'est le scénario à
    éviter. */
-const CACHE = 'perf-avions-v6';
+const CACHE = 'perf-avions-v7';
 
 /* Les photos d'avions vivent dans un dossier au nom espacé, et sont déclarées
    avec l'espace encodé (%20) dans db-flotte.js. Une clé de cache se compare
@@ -17,7 +17,10 @@ const ASSETS = [
   './',
   'index.html',
   'db-flotte.js',
-  'logo.png',
+  /* icon.svg a remplacé logo.png dans l'en-tête : c'est désormais lui qu'il faut
+     précacher, sans quoi le logo manquerait hors connexion. logo.png reste dans
+     le dépôt mais n'est plus référencé par aucune page. */
+  'icons/icon.svg',
   'C172_Night_cockpit.jpg',
   'icons/icon-192.png',
   'icons/icon-512.png',
