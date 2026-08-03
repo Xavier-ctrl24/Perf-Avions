@@ -17,9 +17,9 @@ const ASSETS = [
   './',
   'index.html',
   'db-flotte.js',
-  /* icon.svg a remplacé logo.png dans l'en-tête : c'est désormais lui qu'il faut
-     précacher, sans quoi le logo manquerait hors connexion. logo.png reste dans
-     le dépôt mais n'est plus référencé par aucune page. */
+  /* icon.svg est le logo de l'en-tête : à précacher, sans quoi il manquerait
+     hors connexion. C'est la même image que le favicon et que les icônes de
+     l'écran d'accueil, source unique de l'identité visuelle. */
   'icons/icon.svg',
   'C172_Night_cockpit.jpg',
   'icons/icon-192.png',
