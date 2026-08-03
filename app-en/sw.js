@@ -20,7 +20,7 @@
       next online visit). This worker deliberately does not return the favour:
       evicting the club app's offline cache from here would be a real bug. */
 const CACHE_PREFIX = 'tlperf-';
-const CACHE = CACHE_PREFIX + 'v2';
+const CACHE = CACHE_PREFIX + 'v3';
 
 const ASSETS = [
   './',
