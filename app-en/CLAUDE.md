@@ -39,7 +39,8 @@ L'outil français reste intact et continue de vivre sa vie sur `main`.
 | Conditions de référence | Imposées à 0 ft / 15 °C / sans vent, avec avertissement appuyé (voir Étape 1) |
 | En-tête | Photo `C172_Night_cockpit.jpg` **conservée** et copiée dans `app-en/` ; **logo de l'aéroclub retiré**, remplacé par `icons/icon.svg`. Décidé le 3 août 2026. Réserve à porter : la diffusion mondiale de la photo suppose de pouvoir en justifier les droits, Google pouvant suspendre la fiche sur signalement |
 | Hauteur d'obstacle | Affichée **« 15 m / 50 ft » en permanence**, dans les deux systèmes d'unités. Ce n'est pas une distance convertie mais une hauteur d'obstacle : le manuel européen dit 15 m, l'américain 50 ft, et l'écart réel (15 m = 49,2 ft) est très inférieur à la précision du modèle. Ne jamais afficher « 49 ft » |
-| Cache PWA | Préfixe **`tlperf-`** (`tlperf-v5` au 3 août 2026), distinct de `perf-avions-vN` : même origine Vercel, et le Cache Storage est par origine, pas par portée |
+| Masse maxi au décollage | **Champ supprimé le 3 août 2026.** Il n'alimentait aucun calcul, il ne servait que de légende sur la carte de résultat. Son retrait a emporté toute la conversion kg/lb (`KG_PER_LB`, `massToInternal`, `massToDisplay`, l'entrée `mass` de `UNIT_LABELS` et de `CONVERTERS`) : c'était son seul consommateur. Le champ « Avion » a pris sa place dans la rubrique Facultatif, et la grille du haut du panneau a disparu |
+| Cache PWA | Préfixe **`tlperf-`** (`tlperf-v6` au 3 août 2026), distinct de `perf-avions-vN` : même origine Vercel, et le Cache Storage est par origine, pas par portée |
 
 ## Arborescence cible
 

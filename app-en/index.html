@@ -432,13 +432,6 @@
   <section class="panel">
     <h2 data-i18n="ac.head">Aircraft &mdash; from your flight manual</h2>
 
-    <div class="grid">
-      <div class="field">
-        <label for="acName"><span data-i18n="ac.name">Aircraft (optional)</span></label>
-        <input type="text" id="acName" data-i18n-ph="ac.name.ph" placeholder="e.g. C172S / F-GXYZ" oninput="recompute()">
-      </div>
-    </div>
-
     <!-- Takeoff and landing are computed independently: preparing a departure
          should not require digging out the landing figures too. -->
     <p class="panel-note" data-i18n="ac.note">Fill in only the manoeuvre you need. Takeoff and landing are worked out independently of each other.</p>
@@ -469,9 +462,12 @@
 
     <h3 class="sub" data-i18n="optional">Optional</h3>
     <div class="grid">
+      <!-- The aircraft name lives here rather than at the top of the panel: it is
+           a label on the printout, not an input to the calculation, so it belongs
+           with the other optional fields. -->
       <div class="field">
-        <label for="acMtow"><span data-i18n="ac.mtow">Max takeoff weight</span> <span class="unit-hint" data-u="mass"></span></label>
-        <input type="number" id="acMtow" min="0" data-i18n-ph="ph.optional" placeholder="optional" oninput="recompute()">
+        <label for="acName"><span data-i18n="ac.name">Aircraft</span></label>
+        <input type="text" id="acName" data-i18n-ph="ac.name.ph" placeholder="e.g. C172S / F-GXYZ" oninput="recompute()">
       </div>
       <div class="field">
         <label for="acXwind"><span data-i18n="ac.xwind">Max demonstrated crosswind</span> <span class="unit-hint">(kt)</span></label>
@@ -691,13 +687,13 @@ const STRINGS = {
     'update.btn':'Reload',
 
     'ac.head':'Aircraft — from your flight manual',
-    'ac.name':'Aircraft (optional)', 'ac.name.ph':'e.g. C172S / F-GXYZ',
+    'ac.name':'Aircraft', 'ac.name.ph':'e.g. C172S / F-GXYZ',
     'ac.note':'Fill in only the manoeuvre you need. Takeoff and landing are worked out independently of each other.',
     'takeoff':'Takeoff', 'landing':'Landing', 'optional':'Optional',
     'roll':'Ground roll', 'dist15':'Over 15 m / 50 ft obstacle',
     'ph.300':'e.g. 300', 'ph.500':'e.g. 500', 'ph.200':'e.g. 200', 'ph.400':'e.g. 400',
     'ph.optional':'optional',
-    'ac.mtow':'Max takeoff weight', 'ac.xwind':'Max demonstrated crosswind',
+    'ac.xwind':'Max demonstrated crosswind',
     'ac.grass':'Grass penalty', 'ac.grass.u':'(%, applied on grass runways)',
     'ac.refwarn.title':'⚠ Reference conditions assumed',
     'ac.refwarn.a':'Figures are assumed to be sea level,',
@@ -779,13 +775,13 @@ const STRINGS = {
     'update.btn':'Recharger',
 
     'ac.head':'Avion — d’après votre manuel de vol',
-    'ac.name':'Avion (facultatif)', 'ac.name.ph':'ex. C172S / F-GXYZ',
+    'ac.name':'Avion', 'ac.name.ph':'ex. C172S / F-GXYZ',
     'ac.note':'Ne remplissez que la manœuvre dont vous avez besoin. Le décollage et l’atterrissage sont calculés indépendamment l’un de l’autre.',
     'takeoff':'Décollage', 'landing':'Atterrissage', 'optional':'Facultatif',
     'roll':'Roulement au sol', 'dist15':'Distance pour franchir 15 m / 50 ft',
     'ph.300':'ex. 300', 'ph.500':'ex. 500', 'ph.200':'ex. 200', 'ph.400':'ex. 400',
     'ph.optional':'facultatif',
-    'ac.mtow':'Masse maxi au décollage', 'ac.xwind':'Traversier maxi démontré',
+    'ac.xwind':'Traversier maxi démontré',
     'ac.grass':'Majoration herbe', 'ac.grass.u':'(%, appliquée sur piste en herbe)',
     'ac.refwarn.title':'⚠ Conditions de référence supposées',
     'ac.refwarn.a':'Vos chiffres sont supposés relevés au niveau de la mer,',
@@ -890,13 +886,15 @@ function setLang(next){
    because that is how every pilot in the world reads them. */
 const M_PER_FT = 0.3048;
 const HPA_PER_INHG = 33.8639;
-const KG_PER_LB = 0.45359237;
+/* No mass conversion any longer: the max takeoff weight field was the only thing
+   that ever carried kilograms, and it was a caption on the result card, never an
+   input to a computation. It went, and the kg/lb plumbing went with it. */
 
 let UNITS = 'metric';
 
 const UNIT_LABELS = {
-  metric:   { dist:'(m)',  toda:'(TODA, m)',  lda:'(LDA, m)',  temp:'(°C)', press:'(hPa)',  mass:'(kg)' },
-  imperial: { dist:'(ft)', toda:'(TODA, ft)', lda:'(LDA, ft)', temp:'(°F)', press:'(inHg)', mass:'(lb)' }
+  metric:   { dist:'(m)',  toda:'(TODA, m)',  lda:'(LDA, m)',  temp:'(°C)', press:'(hPa)' },
+  imperial: { dist:'(ft)', toda:'(TODA, ft)', lda:'(LDA, ft)', temp:'(°F)', press:'(inHg)' }
 };
 
 /* Field readers: display unit in, internal unit out. */
@@ -906,8 +904,6 @@ function tempToInternal(v){ return UNITS === 'imperial' ? (v - 32) * 5 / 9 : v; 
 function tempToDisplay(v){ return UNITS === 'imperial' ? v * 9 / 5 + 32 : v; }
 function pressToInternal(v){ return UNITS === 'imperial' ? v * HPA_PER_INHG : v; }
 function pressToDisplay(v){ return UNITS === 'imperial' ? v / HPA_PER_INHG : v; }
-function massToInternal(v){ return UNITS === 'imperial' ? v * KG_PER_LB : v; }
-function massToDisplay(v){ return UNITS === 'imperial' ? v / KG_PER_LB : v; }
 
 /* Which inputs carry a unit, and how to round them when the switch is flipped.
    The safety margin is deliberately absent: it is a dimensionless factor and
@@ -920,15 +916,13 @@ const UNIT_FIELDS = [
   { id:'acLdDist', kind:'dist', dec:0 },
   { id:'rwTODA',   kind:'dist', dec:0 },
   { id:'rwLDA',    kind:'dist', dec:0 },
-  { id:'acMtow',   kind:'mass', dec:0 },
   { id:'temp',     kind:'temp', dec:0 },
   { id:'qnh',      kind:'press', dec:{ metric:0, imperial:2 } }
 ];
 const CONVERTERS = {
   dist:  { toInternal:distToInternal,  toDisplay:distToDisplay },
   temp:  { toInternal:tempToInternal,  toDisplay:tempToDisplay },
-  press: { toInternal:pressToInternal, toDisplay:pressToDisplay },
-  mass:  { toInternal:massToInternal,  toDisplay:massToDisplay }
+  press: { toInternal:pressToInternal, toDisplay:pressToDisplay }
 };
 
 /* The assumed reference temperature, written in the unit the pilot is reading.
@@ -1480,13 +1474,11 @@ function buildAircraftFromForm(){
   const pair = (roll, dist) => ({ roll: roll * k, dist15: dist * k });
   const both = (roll, dist) => ({ paved: pair(roll, dist), grass: pair(roll, dist) });
 
-  const mtow = numOrNull('acMtow');
   const xwind = numOrNull('acXwind');
   const ac = {
     name: document.getElementById('acName').value.trim(),
     // Forced reference condition — the app's heaviest assumption, see Method.
     ref: { elevFt: 0, tempC: 15, headwindKt: 0 },
-    mtow: mtow === null ? null : massToInternal(mtow),
     crosswindLimit: xwind !== null && xwind > 0 ? xwind : null,
     icon: ICON_KEY,
     grassPenaltyApplied: k !== 1 ? penaltyPct : null
@@ -1545,8 +1537,7 @@ function recompute(){
 
   // Reference captions
   const acLabel = ac && ac.name ? ac.name : t('ref.yours');
-  const weightTxt = ac && ac.mtow ? ` · ${fmt(massToDisplay(ac.mtow))} ${UNITS === 'imperial' ? 'lb' : 'kg'}` : '';
-  const refTxt = t('ref.a') + refTempTxt() + t('ref.b') + weightTxt + ' · ' + acLabel;
+  const refTxt = t('ref.a') + refTempTxt() + t('ref.b') + ' · ' + acLabel;
   document.getElementById('toRef').textContent = refTxt;
   document.getElementById('ldRef').textContent = refTxt;
   document.getElementById('toIcon').innerHTML = ICONS[ICON_KEY] || '';
@@ -1697,7 +1688,7 @@ const SETTINGS_KEY = 'tlPerfEN';
    time as their fields left the page. */
 const SAVED_FIELDS = [
   'acName','acToRoll','acToDist','acLdRoll','acLdDist',
-  'acMtow','acXwind','acGrassPenalty',
+  'acXwind','acGrassPenalty',
   'rwName','rwElev','rwSurface','rwQFU','rwTODA','rwLDA','rwSlope',
   'temp','qnh','windDir','windSpeed','margin','metarIcao'
 ];
