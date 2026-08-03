@@ -148,36 +148,6 @@
   select:focus,input:focus{outline:2px solid var(--phos);outline-offset:1px;}
   .hint{font-size:.78rem;color:var(--phos);margin-top:4px;text-shadow:0 0 8px rgba(87,224,140,.35);}
 
-  /* Amber caution block, reused for every warning that is not a computed result */
-  .caution{
-    margin-top:14px;background:var(--amber-bg);border:1px solid #8a6a2a;
-    border-left-width:5px;border-left-color:var(--amber);border-radius:8px;
-    padding:10px 14px;color:var(--amber);font-size:.8rem;line-height:1.5;
-  }
-  .caution .caution-title{font-weight:700;text-transform:uppercase;letter-spacing:.6px;
-    font-size:.78rem;font-family:var(--font-placard);display:block;margin-bottom:3px;}
-  .caution.hidden{display:none;}
-
-  /* Folded warning strip. Compact by default, full prose on tap. */
-  details.caution-fold{padding:9px 13px;}
-  details.caution-fold summary{
-    cursor:pointer;list-style:none;display:block;
-    font-size:.78rem;line-height:1.45;
-  }
-  /* The default disclosure triangle is removed in favour of the explicit
-     "Read more" affordance, which survives translation and is a bigger tap
-     target than a 10 px triangle. */
-  details.caution-fold summary::-webkit-details-marker{display:none;}
-  details.caution-fold .fold-more{
-    text-decoration:underline;white-space:nowrap;font-weight:700;
-  }
-  details.caution-fold[open] .fold-more{display:none;}
-  details.caution-fold .fold-body{
-    margin-top:10px;padding-top:10px;border-top:1px solid #8a6a2a;
-  }
-  details.caution-fold .fold-body p{margin:0 0 10px;}
-  details.caution-fold .fold-body p:last-child{margin-bottom:0;}
-  details.caution-fold .fold-body strong{color:var(--amber);}
 
   .results{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
   @media (max-width:820px){.results{grid-template-columns:1fr;}}
@@ -297,6 +267,15 @@
     font-family:var(--font-placard);text-transform:uppercase;letter-spacing:1.2px;}
   details.method .content{margin-top:12px;font-size:.85rem;color:var(--cream-dim);line-height:1.55;}
   details.method .content strong{color:var(--cream);}
+  /* The disclaimer, first paragraph inside the panel. Amber text on a tinted
+     background so it reads as a warning once opened — but deliberately NOT an
+     always-visible banner: that is precisely what this panel replaced. */
+  details.method .method-warn{
+    background:var(--amber-bg);border:1px solid #8a6a2a;
+    border-left-width:5px;border-left-color:var(--amber);border-radius:8px;
+    padding:10px 14px;color:#e9c079;margin:0 0 14px;
+  }
+  details.method .method-warn strong{color:var(--amber);}
   details.method table{border-collapse:collapse;width:100%;margin:10px 0;font-size:.82rem;}
   details.method td,details.method th{border:1px solid var(--line);padding:6px 8px;text-align:left;}
   details.method th{color:var(--cream);}
@@ -497,33 +476,13 @@
       </div>
     </div>
 
-    <!-- The two amber warnings of this app, folded into one strip.
-         Rationale: at 375 px the reference-conditions block and the bottom
-         disclaimer together ate 381 px, 47% of a phone screen, for text that is
-         read once and then skipped over. Both permanence commitments are still
-         honoured, because the SUMMARY is always visible and carries both facts
-         in short form — the assumed reference conditions and "does not replace
-         the flight manual". The full prose lives one tap away, and also in the
-         first-run acceptance screen and the Method panel.
-
-         A <details> rather than a modal: the pattern is already in the page
-         (details.method), and it costs no JS, no z-index against the acceptance
-         overlay, no Escape handler, and gets keyboard and screen-reader
-         behaviour for free.
-
-         The body reuses the EXISTING keys (ac.refwarn.*, disclaimer). Never
-         duplicate a safety notice into fresh keys: the two copies drift. -->
-    <details class="caution caution-fold">
-      <summary>
-        <span data-i18n="warn.short.a">&#9888; Figures assumed sea level,</span> <span class="ref-temp">15&nbsp;°C</span><span data-i18n="warn.short.b">, no wind. Does not replace the flight manual.</span>
-        <span class="fold-more" data-i18n="warn.more">Read more</span>
-      </summary>
-      <div class="fold-body">
-        <p><strong data-i18n="ac.refwarn.title">&#9888; Reference conditions assumed</strong><br>
-          <span data-i18n="ac.refwarn.a">Figures are assumed to be sea level,</span> <span class="ref-temp">15&nbsp;°C</span><span data-i18n="ac.refwarn.b">, no wind. If your manual's table is referenced to other conditions, this app will underestimate your distances.</span></p>
-        <p data-i18n-html="disclaimer"></p>
-      </div>
-    </details>
+    <!-- No amber warning strip here any more (removed 3 Aug 2026, at the owner's
+         explicit request after it had already been condensed once). The reference
+         conditions were being told twice: once in this strip, once in the Method
+         panel's own "Reference conditions" paragraph. That panel, at the bottom
+         of the page, is now the single home for both the assumptions and the
+         disclaimer. The first-run acceptance screen still forces the disclaimer
+         in front of the pilot once. -->
   </section>
 
   <section class="panel">
@@ -651,9 +610,9 @@
     <div class="content" id="methodContent"></div>
   </details>
 
-  <!-- The bottom disclaimer block used to sit here. It now lives inside the
-       amber strip in the Aircraft panel, whose always-visible summary carries its
-       essential sentence — see the comment there. -->
+  <!-- The bottom disclaimer block used to sit here. It is now the first
+       paragraph inside the Method panel just above, which is the single home for
+       every warning this app carries. -->
 
   <div class="print-row">
     <!-- Support link, pure decoration: no role in any computation. At the bottom
@@ -731,15 +690,6 @@ const STRINGS = {
     'ph.optional':'optional',
     'ac.xwind':'Max demonstrated crosswind',
     'ac.grass':'Grass penalty', 'ac.grass.u':'(%, applied on grass runways)',
-    /* Short form, always visible. It must carry BOTH permanence commitments:
-       the assumed reference conditions, and "does not replace the flight
-       manual". Keep it to two short lines at 375 px. */
-    'warn.short.a':'⚠ Figures assumed sea level,',
-    'warn.short.b':', no wind. Does not replace the flight manual.',
-    'warn.more':'Read more',
-    'ac.refwarn.title':'⚠ Reference conditions assumed',
-    'ac.refwarn.a':'Figures are assumed to be sea level,',
-    'ac.refwarn.b':', no wind. If your manual’s table is referenced to other conditions, this app will underestimate your distances.',
 
     'rw.head':'Runway — from your aerodrome chart',
     'rw.name':'Aerodrome / runway (optional)', 'rw.name.ph':'e.g. EGKA RWY 25',
@@ -757,7 +707,7 @@ const STRINGS = {
     'inst.alt':'Altimeter — field / density',
 
     'm.dist15':'Over 15 m / 50 ft', 'm.margin':'With margin', 'm.avail':'Available',
-    'method.title':'Method and assumptions',
+    'method.title':'⚠ Method, assumptions and warnings',
     'disclaimer':'<strong>Warning.</strong> This tool assists flight preparation. Its altitude, temperature, wind and slope corrections are approximations applied to figures you supply, not certified performance data. It does not replace your aircraft’s official Flight Manual, the actual weather of the day, or the judgement of the pilot in command. Always check your real margins before every takeoff and landing.',
     'coffee':'Buy me a coffee',
     'footer':'Takeoff & Landing Perf · no built-in aircraft or aerodrome data · every figure is the one you entered ·',
@@ -825,12 +775,6 @@ const STRINGS = {
     'ph.optional':'facultatif',
     'ac.xwind':'Traversier maxi démontré',
     'ac.grass':'Majoration herbe', 'ac.grass.u':'(%, appliquée sur piste en herbe)',
-    'warn.short.a':'⚠ Chiffres supposés au niveau de la mer,',
-    'warn.short.b':', sans vent. Ne remplace pas le manuel de vol.',
-    'warn.more':'En savoir plus',
-    'ac.refwarn.title':'⚠ Conditions de référence supposées',
-    'ac.refwarn.a':'Vos chiffres sont supposés relevés au niveau de la mer,',
-    'ac.refwarn.b':', sans vent. Si la table de votre manuel est référencée à d’autres conditions, cette application sous-estimera vos distances.',
 
     'rw.head':'Piste — d’après votre carte d’aérodrome',
     'rw.name':'Aérodrome / piste (facultatif)', 'rw.name.ph':'ex. LFSH RWY 03',
@@ -848,7 +792,7 @@ const STRINGS = {
     'inst.alt':'Altimètre — terrain / densité',
 
     'm.dist15':'Franchissement 15 m / 50 ft', 'm.margin':'Avec marge', 'm.avail':'Disponible',
-    'method.title':'Méthode et hypothèses',
+    'method.title':'⚠ Méthode, hypothèses et avertissements',
     'disclaimer':'<strong>Avertissement.</strong> Cet outil aide à la préparation du vol. Ses corrections d’altitude, de température, de vent et de pente sont des approximations appliquées à des chiffres que vous fournissez, et non des performances certifiées. Il ne remplace ni le manuel de vol officiel de votre avion, ni la météo réelle du jour, ni le jugement du commandant de bord. Vérifiez toujours vos marges réelles avant chaque décollage et chaque atterrissage.',
     'coffee':'Offrez-moi un café',
     'footer':'Perfos décollage & atterrissage · aucune base avion ni aérodrome · chaque chiffre est celui que vous avez saisi ·',
@@ -977,12 +921,9 @@ function refTempTxt(){ return UNITS === 'imperial' ? '59 °F' : '15 °C'; }
 
 function refreshUnitLabels(){
   const L = UNIT_LABELS[UNITS];
-  // querySelectorAll, not getElementById: the reference temperature now appears
-  // twice, once in the folded strip's summary and once in its body. Filling only
-  // the first would show 59 °F in the summary and 15 °C two lines below it.
-  document.querySelectorAll('.ref-temp').forEach(el => {
-    el.innerHTML = refTempTxt().replace(' ', '&nbsp;');
-  });
+  // No reference-temperature span to fill any more: the only place that figure
+  // still appears is the Method panel, whose prose calls refTempTxt() inline and
+  // is rebuilt by every recompute() — which setUnits() triggers.
   document.querySelectorAll('.unit-hint[data-u]').forEach(el => {
     el.textContent = L[el.dataset.u] || '';
   });
@@ -1658,7 +1599,15 @@ function renderMethod(ac){
       ${ac.grassPenaltyApplied ? `<p>${FR ? 'Ces chiffres incluent votre majoration herbe de +' : 'These include your grass penalty of +'}${fmtSlope(ac.grassPenaltyApplied)}.</p>` : ''}`
     : `<p><em>${FR ? 'Aucun chiffre saisi pour l’instant.' : 'No figures entered yet.'}</em></p>`;
 
-  document.getElementById('methodContent').innerHTML = FR ? `
+  /* The disclaimer, injected from its own key rather than copied into both prose
+     templates: one copy, no drift. It opens the panel because it is the sentence
+     that matters most, and this panel is now the only place it lives after the
+     first-run acceptance screen. The reference-conditions paragraph is NOT added
+     here — both templates already carry it, and telling it twice is exactly what
+     this merge set out to stop. */
+  const warn = `<p class="method-warn">${t('disclaimer')}</p>`;
+
+  document.getElementById('methodContent').innerHTML = FR ? warn + `
     <p><strong>Cette application ne contient aucune donnée avion ni aucune donnée d’aérodrome.</strong> Chaque nombre ci-dessous est un nombre que vous avez saisi, relevé dans votre propre manuel de vol et sur votre propre carte d’aérodrome. Rien n’est recherché, rien n’est republié, et rien n’est vérifié à votre place.</p>
 
     <p><strong>Vos chiffres de référence</strong> (tels que saisis, dans les unités courantes) :</p>
@@ -1690,7 +1639,7 @@ function renderMethod(ac){
     <p><strong>Unités.</strong> Les distances basculent entre mètres et pieds, la température entre °C et °F, la pression entre hPa et inHg. Les altitudes sont toujours en pieds et le vent toujours en nœuds, dans les deux systèmes, parce que c’est ainsi qu’ils se lisent partout dans le monde. La hauteur de franchissement 15 m / 50 ft est une hauteur d’obstacle unique affichée dans les deux unités, et non deux valeurs différentes : 15 m valent 49,2 ft, et l’écart est très en deçà de la précision de tout ce qui est calculé ici.</p>
 
     <p><strong>Instruments.</strong> <em>Vent</em> : bande de piste au QFU saisi, flèche indiquant d’où vient le vent, composantes dans les fenêtres numériques (HEAD/TAIL et XW, avec R ou L pour le côté du traversier) ; l’alerte traversier maxi démontré n’apparaît que si vous avez saisi ce chiffre, et un traversier maxi démontré n’est pas une limitation opérationnelle &mdash; c’est la valeur démontrée lors des essais en vol du constructeur. <em>Altimètre</em> : les aiguilles vertes suivent l’<strong>altitude terrain</strong> que vous avez saisie (courte : milliers de ft, longue : centaines), ce que lit un altimètre calé au QNH roues au sol. Sur une piste en pente, saisissez le seuil le plus haut : c’est le pénalisant. L’aiguille orange indique l’altitude-densité en milliers de ft, sur la même échelle que la courte aiguille verte. La légende du bas rappelle l’<strong>altitude-pression</strong>, qui est le chiffre réellement utilisé par le calcul, et l’écart ISA. Les cartouches des instruments restent en anglais (ALT · FEET, FIELD, DA, PA, ISA, HEAD/TAIL/XW), comme sur les instruments de bord réels.</p>
-  ` : `
+  ` : warn + `
     <p><strong>This app contains no aircraft and no aerodrome data.</strong> Every number below is one you typed, taken from your own flight manual and your own aerodrome chart. Nothing is looked up, nothing is republished, and nothing is checked on your behalf.</p>
 
     <p><strong>Your reference figures</strong> (as entered, in the current units):</p>
