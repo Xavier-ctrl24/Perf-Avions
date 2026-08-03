@@ -538,7 +538,7 @@
 
     <div class="wind-panel" style="margin-top:16px;">
       <div class="wind-metric wind-rose-tile"><div class="label" id="windRoseLabel">Wind</div><div id="windRose"></div><div class="tile-sub" id="windCrossWarn"></div></div>
-      <div class="wind-metric wind-rose-tile"><div class="label">Altimeter &mdash; pressure / density</div><div id="altimeter"></div></div>
+      <div class="wind-metric wind-rose-tile"><div class="label">Altimeter &mdash; field / density</div><div id="altimeter"></div></div>
       <div class="wind-metric wind-rose-tile" id="nightTile"><div class="label" id="nightLabel">Aeronautical day / night</div><div id="nightClock"></div><div class="tile-sub" id="nightSub"></div></div>
     </div>
   </section>
@@ -1066,10 +1066,12 @@ function buildWindRoseSvg(qfu, windDir, windSpeed, wind, maxX){
 
 /* ---------- Altimeter ----------
    C172-style dial: 0-9 (thousands of ft), long needle for hundreds, short one
-   for thousands, both driven by PRESSURE altitude (what a real altimeter set to
-   1013 follows). The digital windows give pressure and density altitude, and the
-   ISA deviation is recalled below. Feet in both unit systems, on purpose. */
-function buildAltimeterSvg(paFt, daFt, isaDev){
+   for thousands, both driven by FIELD elevation — the figure the pilot typed in
+   the runway panel. That is what an altimeter set to QNH reads with the wheels
+   on the ground, so it is the number they can check against their own instrument.
+   PRESSURE altitude is still what feeds the computation; it is recalled in the
+   bottom caption with the ISA deviation. Feet in both unit systems, on purpose. */
+function buildAltimeterSvg(elevFt, daFt, paFt, isaDev){
   const C = 100, R = 88;
   let marks = '';
   for (let i = 0; i < 50; i++){
@@ -1086,12 +1088,12 @@ function buildAltimeterSvg(paFt, daFt, isaDev){
     nums += `<text x="${(C + r * Math.cos(rad)).toFixed(1)}" y="${(C + r * Math.sin(rad)).toFixed(1)}" ` +
       `font-size="17" font-weight="700" fill="#ece5d3" text-anchor="middle" dominant-baseline="central">${n}</text>`;
   }
-  // Green needles = PRESSURE altitude (short: thousands, long: hundreds).
+  // Green needles = FIELD elevation (short: thousands, long: hundreds).
   // Orange needle = DENSITY altitude on the THOUSANDS scale, like the short green
   // one: at 1,827 ft it points just short of the 2, which is what the eye expects
   // from a single needle (on the hundreds scale it looked like 8,000).
-  const aLong = (((paFt % 1000) + 1000) % 1000) / 1000 * 360;
-  const aShort = paFt / 10000 * 360;
+  const aLong = (((elevFt % 1000) + 1000) % 1000) / 1000 * 360;
+  const aShort = elevFt / 10000 * 360;
   const aDa = daFt / 10000 * 360;
   const needles =
     `<g transform="rotate(${aShort.toFixed(1)} ${C} ${C})">` +
@@ -1113,8 +1115,8 @@ function buildAltimeterSvg(paFt, daFt, isaDev){
     marks + nums +
     `<text x="${C}" y="${C - 46}" font-size="9" fill="#a49e8f" text-anchor="middle">ALT · FEET</text>` +
     needles +
-    lcd(4, `PA ${fmt(paFt)} ft`, '#57e08c') + lcd(104, `DA ${fmt(daFt)} ft`, '#ffb84d') +
-    `<text x="${C}" y="247" font-size="12" fill="#a49e8f" text-anchor="middle">ISA ${isaDev >= 0 ? '+' : '−'}${Math.abs(Math.round(isaDev))} °C</text>` +
+    lcd(4, `FIELD ${fmt(elevFt)} ft`, '#57e08c') + lcd(104, `DA ${fmt(daFt)} ft`, '#ffb84d') +
+    `<text x="${C}" y="247" font-size="12" fill="#a49e8f" text-anchor="middle">PA ${fmt(paFt)} ft · ISA ${isaDev >= 0 ? '+' : '−'}${Math.abs(Math.round(isaDev))} °C</text>` +
     `</svg>`;
 }
 
@@ -1363,7 +1365,7 @@ function recompute(){
     xWarnEl.textContent = maxX ? `Max demonstrated crosswind: ${maxX} kt` : '';
   }
 
-  document.getElementById('altimeter').innerHTML = buildAltimeterSvg(paFt, daFt, isaDev);
+  document.getElementById('altimeter').innerHTML = buildAltimeterSvg(elevFt, daFt, paFt, isaDev);
 
   // Aeronautical day and night, from the coordinates the pilot typed. Hidden
   // when they are empty: there is no database to fall back on in this edition.
@@ -1490,7 +1492,7 @@ function renderMethod(ac){
 
     <p><strong>Units.</strong> Distances switch between metres and feet, temperature between °C and °F, pressure between hPa and inHg. Altitudes are always in feet and wind always in knots, in both systems, because that is how they are read worldwide. The 15 m / 50 ft screen height is a single obstacle height shown in both units, not two different values: 15 m is 49.2 ft, and the difference is far below the precision of anything computed here.</p>
 
-    <p><strong>Instruments.</strong> <em>Wind</em>: runway strip at the heading you entered, arrow showing where the wind blows from, components in the digital windows (HEAD/TAIL and XW, with R or L for the crosswind side); the max demonstrated crosswind alert only appears if you entered that figure, and a max demonstrated crosswind is not an operating limitation — it is the value demonstrated in the manufacturer's flight tests. <em>Altimeter</em>: the green needles follow pressure altitude (short: thousands of ft, long: hundreds, like an altimeter set to 1013); the orange needle shows density altitude in thousands of ft, on the same scale as the short green one. <em>Day / night watch</em>: 24 h dial (midnight at the bottom, noon at the top), green arc = aeronautical day, amber hand = current time; sunrise and sunset are computed offline (NOAA algorithm, ≈ 1 min accuracy) at the coordinates you entered, and the arc uses sunrise − 30 min / sunset + 30 min, which is the French definition. <strong>Check the definition of night that applies where you fly</strong>, it is not the same everywhere. This is not a substitute for official ephemerides.</p>
+    <p><strong>Instruments.</strong> <em>Wind</em>: runway strip at the heading you entered, arrow showing where the wind blows from, components in the digital windows (HEAD/TAIL and XW, with R or L for the crosswind side); the max demonstrated crosswind alert only appears if you entered that figure, and a max demonstrated crosswind is not an operating limitation — it is the value demonstrated in the manufacturer's flight tests. <em>Altimeter</em>: the green needles follow the <strong>field elevation</strong> you entered (short: thousands of ft, long: hundreds), which is what an altimeter set to QNH reads with the wheels on the ground. On a sloping runway, enter the higher end: it is the penalising one. The orange needle shows density altitude in thousands of ft, on the same scale as the short green one. The bottom caption recalls the <strong>pressure altitude</strong>, which is the figure the computation actually uses, and the ISA deviation. <em>Day / night watch</em>: 24 h dial (midnight at the bottom, noon at the top), green arc = aeronautical day, amber hand = current time; sunrise and sunset are computed offline (NOAA algorithm, ≈ 1 min accuracy) at the coordinates you entered, and the arc uses sunrise − 30 min / sunset + 30 min, which is the French definition. <strong>Check the definition of night that applies where you fly</strong>, it is not the same everywhere. This is not a substitute for official ephemerides.</p>
   `;
 }
 

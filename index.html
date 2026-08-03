@@ -467,7 +467,7 @@
 
     <div class="wind-panel" style="margin-top:16px;">
       <div class="wind-metric wind-rose-tile"><div class="label" id="windRoseLabel">Vent</div><div id="windRose"></div><div class="tile-sub" id="windCrossWarn"></div></div>
-      <div class="wind-metric wind-rose-tile"><div class="label">Altimètre — pression / densité</div><div id="altimeter"></div></div>
+      <div class="wind-metric wind-rose-tile"><div class="label">Altimètre — terrain / densité</div><div id="altimeter"></div></div>
       <div class="wind-metric wind-rose-tile" id="nightTile"><div class="label" id="nightLabel">Jour / nuit aéronautiques</div><div id="nightClock"></div><div class="tile-sub" id="nightSub"></div></div>
     </div>
   </section>
@@ -964,10 +964,12 @@ function buildWindRoseSvg(qfu, windDir, windSpeed, wind, maxX){
 
 /* ---------- Altimètre ----------
    Cadran style C172 : chiffres 0-9 (milliers de ft), aiguille longue pour les
-   centaines, courte pour les milliers, calées sur l'altitude PRESSION (c'est elle
-   que suit un vrai altimètre calé 1013). Les fenêtres digitales donnent l'altitude
-   pression et l'altitude densité, l'écart ISA est rappelé dessous. */
-function buildAltimeterSvg(paFt, daFt, isaDev){
+   centaines, courte pour les milliers, calées sur l'altitude TERRAIN — celle de
+   la carte VAC, ou celle saisie à la main en terrain personnalisé. C'est ce que
+   lit un altimètre calé au QNH, roues au sol : le repère que le pilote a sous les
+   yeux avant de rouler. L'altitude PRESSION reste le chiffre qui alimente le
+   calcul, elle est rappelée dans la légende du bas avec l'écart ISA. */
+function buildAltimeterSvg(elevFt, daFt, paFt, isaDev){
   const C = 100, R = 88;
   let marks = '';
   for (let i = 0; i < 50; i++){
@@ -984,12 +986,12 @@ function buildAltimeterSvg(paFt, daFt, isaDev){
     nums += `<text x="${(C + r * Math.cos(rad)).toFixed(1)}" y="${(C + r * Math.sin(rad)).toFixed(1)}" ` +
       `font-size="17" font-weight="700" fill="#ece5d3" text-anchor="middle" dominant-baseline="central">${n}</text>`;
   }
-  // Aiguilles vertes = altitude PRESSION (courte : milliers, longue : centaines).
+  // Aiguilles vertes = altitude TERRAIN (courte : milliers, longue : centaines).
   // Aiguille orange = altitude DENSITÉ sur l'échelle des MILLIERS, comme la courte
   // verte : pour 1 827 ft elle pointe juste avant le 2, ce que l'œil attend d'une
   // aiguille unique (sur l'échelle des centaines, elle semblait indiquer 8 000).
-  const aLong = (((paFt % 1000) + 1000) % 1000) / 1000 * 360;
-  const aShort = paFt / 10000 * 360;
+  const aLong = (((elevFt % 1000) + 1000) % 1000) / 1000 * 360;
+  const aShort = elevFt / 10000 * 360;
   const aDa = daFt / 10000 * 360;
   const needles =
     `<g transform="rotate(${aShort.toFixed(1)} ${C} ${C})">` +
@@ -1011,8 +1013,8 @@ function buildAltimeterSvg(paFt, daFt, isaDev){
     marks + nums +
     `<text x="${C}" y="${C - 46}" font-size="9" fill="#a49e8f" text-anchor="middle">ALT · FEET</text>` +
     needles +
-    lcd(4, `PA ${fmt(paFt)} ft`, '#57e08c') + lcd(104, `DA ${fmt(daFt)} ft`, '#ffb84d') +
-    `<text x="${C}" y="247" font-size="12" fill="#a49e8f" text-anchor="middle">ISA ${isaDev >= 0 ? '+' : '−'}${Math.abs(Math.round(isaDev))} °C</text>` +
+    lcd(4, `TERRAIN ${fmt(elevFt)} ft`, '#57e08c') + lcd(104, `DA ${fmt(daFt)} ft`, '#ffb84d') +
+    `<text x="${C}" y="247" font-size="12" fill="#a49e8f" text-anchor="middle">PA ${fmt(paFt)} ft · ISA ${isaDev >= 0 ? '+' : '−'}${Math.abs(Math.round(isaDev))} °C</text>` +
     `</svg>`;
 }
 
@@ -1243,9 +1245,10 @@ function recompute(){
     xWarnEl.textContent = maxX ? `Traversier max démontré : ${maxX} kt` : '';
   }
 
-  // Altimètre : aiguilles sur l'altitude pression, fenêtres PA / DA
+  // Altimètre : aiguilles sur l'altitude terrain, fenêtres TERRAIN / DA,
+  // altitude pression et écart ISA en légende
   const isaDev = temp - isaTemp(paFt);
-  document.getElementById('altimeter').innerHTML = buildAltimeterSvg(paFt, daFt, isaDev);
+  document.getElementById('altimeter').innerHTML = buildAltimeterSvg(elevFt, daFt, paFt, isaDev);
 
   // Jour et nuit aéronautiques : lever − 30 min / coucher + 30 min au terrain
   // sélectionné (ARP de la base), masqués en terrain personnalisé (pas de coordonnées)
@@ -1341,7 +1344,7 @@ function recompute(){
     <p><strong>Altitude densité</strong> (affichée à titre indicatif) ≈ altitude pression + 120 ft par °C d'écart à la température standard, approximation usuelle. Le calcul des distances n'utilise pas cette valeur : il applique directement les facteurs altitude pression et écart ISA ci-dessus.</p>
     <p><strong>Direction du vent</strong> : le vent d'un METAR est exprimé par rapport au nord vrai, alors que le QFU de piste est magnétique. La déclinaison magnétique locale (environ 2° E en Alsace) est négligeable devant la précision de ce modèle : aucune correction n'est appliquée aux composantes de vent affichées.</p>
     <p><strong>Marge de sécurité</strong> : facteur multiplicatif appliqué à la distance corrigée (passage 15 m), réglable. Valeur par défaut 1,2, soit la majoration de 20 % couramment enseignée en aviation légère ; aucun facteur n'est imposé en VFR privé, le choix reste celui du commandant de bord. Attention à ne pas la confondre avec le passage des 15 m : celui-ci n'est pas une réserve, c'est la distance réellement nécessaire pour franchir un obstacle de 15 m. La marge couvre autre chose — l'écart entre le manuel (avion neuf, pilote d'essai, piste idéale) et la réalité du jour (usure moteur, technique, état de la piste), ainsi que l'imprécision des corrections extrapolées de cet outil.</p>
-    <p><strong>Instruments du panneau vent.</strong> <em>Instrument vent</em> : bande de piste au QFU sélectionné, flèche indiquant d'où vient le vent, composantes en afficheurs numériques (FACE/ARR et TRAV) ; mêmes conventions que le reste de l'outil (vent vrai du METAR vs QFU magnétique, écart négligé). <em>Traversier max démontré</em> : WT9 24 kt d'après le manuel de vol du club ; C172S 15 kt, PA-28-181 17 kt et PS-28 12 kt d'après les POH publiés de ces types, pas encore recoupés avec les manuels du club (valeurs indicatives, à confirmer) ; aucun affichage pour les avions non renseignés (Tétras, Savannah). Le max démontré n'est pas une limitation opérationnelle : c'est la composante démontrée en essais par le constructeur. <em>Altimètre</em> : les aiguilles vertes suivent l'altitude pression (courte : milliers de ft, longue : centaines, comme un altimètre calé 1013) ; l'aiguille orange indique l'altitude densité en milliers de ft, sur la même échelle que la courte verte ; les fenêtres digitales rappellent les deux valeurs. <em>Montre jour/nuit</em> : cadran 24 h (minuit en bas, midi en haut), arc vert = jour aéronautique, aiguille ambre = heure actuelle ; lever et coucher du soleil calculés hors-ligne (algorithme NOAA, précision ≈ 1 min) aux coordonnées ARP relevées sur la carte VAC du terrain ; jour aéro = lever − 30 min, nuit aéro = coucher + 30 min (définition réglementaire en métropole) ; valable pour la date du jour, heure locale de l'appareil ; ne remplace pas les éphémérides officielles.</p>
+    <p><strong>Instruments du panneau vent.</strong> <em>Instrument vent</em> : bande de piste au QFU sélectionné, flèche indiquant d'où vient le vent, composantes en afficheurs numériques (FACE/ARR et TRAV) ; mêmes conventions que le reste de l'outil (vent vrai du METAR vs QFU magnétique, écart négligé). <em>Traversier max démontré</em> : WT9 24 kt d'après le manuel de vol du club ; C172S 15 kt, PA-28-181 17 kt et PS-28 12 kt d'après les POH publiés de ces types, pas encore recoupés avec les manuels du club (valeurs indicatives, à confirmer) ; aucun affichage pour les avions non renseignés (Tétras, Savannah). Le max démontré n'est pas une limitation opérationnelle : c'est la composante démontrée en essais par le constructeur. <em>Altimètre</em> : les aiguilles vertes suivent l'<strong>altitude du terrain</strong> (courte : milliers de ft, longue : centaines), celle de la carte VAC ou celle saisie en terrain personnalisé — c'est ce que lit un altimètre calé au QNH, roues au sol. Sur une piste en pente, la base retient l'ALT SUP, l'extrémité la plus haute. L'aiguille orange indique l'altitude densité en milliers de ft, sur la même échelle que la courte verte. La légende du bas rappelle l'<strong>altitude pression</strong>, qui est le chiffre réellement consommé par le calcul, et l'écart ISA. <em>Montre jour/nuit</em> : cadran 24 h (minuit en bas, midi en haut), arc vert = jour aéronautique, aiguille ambre = heure actuelle ; lever et coucher du soleil calculés hors-ligne (algorithme NOAA, précision ≈ 1 min) aux coordonnées ARP relevées sur la carte VAC du terrain ; jour aéro = lever − 30 min, nuit aéro = coucher + 30 min (définition réglementaire en métropole) ; valable pour la date du jour, heure locale de l'appareil ; ne remplace pas les éphémérides officielles.</p>
   `;
 
   saveSettings();
