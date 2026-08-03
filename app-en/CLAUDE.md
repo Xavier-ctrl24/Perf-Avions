@@ -1,6 +1,8 @@
 # Takeoff & Landing Perf — version mondiale pour le Play Store
 
-> **Statut : plan validé le 3 août 2026, aucun code écrit à ce jour.**
+> **Statut : Étape 1 terminée le 3 août 2026 (application web anglaise écrite et
+> vérifiée au navigateur). `privacy.html` est rédigé mais PAS déployé. Étapes 2
+> à 5 non commencées. Rien n'est commité ni poussé à ce stade.**
 > Ce fichier est la feuille de route de la branche `applitel`. Il est chargé
 > automatiquement au démarrage de toute session Claude Code travaillant dans
 > `app-en/`. Le CLAUDE.md de la racine décrit l'outil français, qui reste la
@@ -22,7 +24,7 @@ L'outil français reste intact et continue de vivre sa vie sur `main`.
 | Package ID (définitif) | **`app.perfavions.runwayperf`** |
 | Langue | Anglais uniquement |
 | Données | Aucune base embarquée, saisie manuelle à usage unique, dernière saisie mémorisée |
-| Fiche avion | Minimale : roulement + distance 15 m, décollage et atterrissage |
+| Fiche avion | Minimale : roulement + distance 15 m, décollage et atterrissage. **Les deux manœuvres sont indépendantes** : remplir le décollage seul (ou l'atterrissage seul) suffit à obtenir ce calcul-là, l'autre carte restant en attente. Décidé le 3 août 2026, après essai : exiger les quatre chiffres obligeait un pilote préparant un simple départ à ressortir ses chiffres d'atterrissage |
 | Unités | Un interrupteur global **Metric / Imperial** (m↔ft, °C↔°F, hPa↔inHg) ; altitudes toujours en pieds ; vent toujours en nœuds |
 | METAR | Conservé (VATSIM, couverture mondiale) |
 | Horloge jour/nuit | Conservée, latitude/longitude saisies à la main (facultatives) |
@@ -32,21 +34,25 @@ L'outil français reste intact et continue de vivre sa vie sur `main`.
 | Organisation | Sous-dossier `app-en/` sur la branche `applitel` |
 | Visuel | Identique à l'actuel (cockpit sombre, instruments SVG) |
 | Conditions de référence | Imposées à 0 ft / 15 °C / sans vent, avec avertissement appuyé (voir Étape 1) |
+| En-tête | Photo `C172_Night_cockpit.jpg` **conservée** et copiée dans `app-en/` ; **logo de l'aéroclub retiré**, remplacé par `icons/icon.svg`. Décidé le 3 août 2026. Réserve à porter : la diffusion mondiale de la photo suppose de pouvoir en justifier les droits, Google pouvant suspendre la fiche sur signalement |
+| Hauteur d'obstacle | Affichée **« 15 m / 50 ft » en permanence**, dans les deux systèmes d'unités. Ce n'est pas une distance convertie mais une hauteur d'obstacle : le manuel européen dit 15 m, l'américain 50 ft, et l'écart réel (15 m = 49,2 ft) est très inférieur à la précision du modèle. Ne jamais afficher « 49 ft » |
+| Cache PWA | Préfixe **`tlperf-`** (`tlperf-v1`), distinct de `perf-avions-vN` : même origine Vercel, et le Cache Storage est par origine, pas par portée |
 
 ## Arborescence cible
 
 ```
 FJAOE/                      ← inchangé, version club française
   index.html, db-flotte.js, sw.js, ...
-  privacy.html              ← nouveau, politique de confidentialité (EN)
-  app-en/                   ← la nouvelle application
+  privacy.html              ← FAIT, politique de confidentialité (EN), pas déployée
+  app-en/                   ← la nouvelle application — FAIT
     CLAUDE.md               ← ce fichier
     index.html              ← app complète (logique + UI, en anglais)
     assets.js               ← icônes SVG + citations, seuls vestiges de PERF_DB
-    sw.js                   ← service worker, cache propre
+    sw.js                   ← service worker, cache tlperf-vN
     manifest.json
-    icons/
-  capacitor/                ← projet Capacitor
+    C172_Night_cockpit.jpg  ← copiée depuis la racine (fond d'en-tête)
+    icons/                  ← copiées depuis la racine, SVG corrigés (voir plus bas)
+  capacitor/                ← projet Capacitor — À FAIRE
     package.json
     capacitor.config.json
     www/                    ← copie de app-en/ produite par un script
@@ -54,9 +60,15 @@ FJAOE/                      ← inchangé, version club française
     keystore.properties     ← gitignoré, jamais commité
 ```
 
-## Étape 1 — Application web anglaise (`app-en/index.html`)
+## Étape 1 — Application web anglaise (`app-en/index.html`) — ✅ FAIT le 3 août 2026
 
-Point de départ : copie de `index.html` (1450 lignes). Les numéros de ligne cités ci-dessous renvoient au `index.html` de la racine, dans son état au commit `55ef78d`.
+> Ce qui suit est désormais un **compte rendu de conception**, pas une consigne à
+> exécuter. Les numéros de ligne renvoient au `index.html` de la racine à son
+> état au commit `55ef78d` et ne correspondent plus au code écrit : lire le code
+> lui-même, qui est commenté. Les décisions et les pièges rencontrés sont
+> consignés dans « Ce que l'écriture a appris », en fin de section.
+
+Point de départ : copie de `index.html` (1450 lignes).
 
 **Suppression de la base.** `db-flotte.js` disparaît au profit de `assets.js`, qui ne conserve que `PERF_DB.icons` (silhouettes SVG génériques, `index.html:874` et `1269`) et `PERF_DB.quotes` (traduites). Le garde-fou `DB_OK` (`index.html:533-541`) devient `ASSETS_OK` et ne conditionne plus que les icônes et la citation, jamais le calcul. Fonctions supprimées : `buildAirportPicker` (546-560), `buildRunwayPicker` (561-577), `buildAircraftPicker` (580-593), `updateAircraftPreview` (594-608), `renderAltiportBanner` (1086-1104), et la branche DB de `recompute()` (1177-1207).
 
@@ -77,6 +89,24 @@ Point de départ : copie de `index.html` (1450 lignes). Les numéros de ligne ci
 **Persistance.** Clé `localStorage` distincte (`tlPerfEN`), et contrairement à l'actuelle qui ne garde que 4 valeurs (`index.html:1349-1359`), elle mémorise **tous** les champs : avion, piste, coordonnées, unités, météo. C'est ce qui rend la saisie à usage unique supportable.
 
 **Bouton café.** Conservé. Capacitor renvoie déjà par défaut les URL hors-origine vers le navigateur du système, donc le simple `<a target="_blank">` actuel suffit probablement. On le **vérifie sur l'APK avant d'ajouter quoi que ce soit**, et seulement s'il s'ouvre dans la WebView on ajoute `@capacitor/app-launcher` (et non `@capacitor/browser`, qui ouvre un onglet intégré à l'appli et ne résoudrait donc pas le problème).
+
+### Ce que l'écriture a appris (3 août 2026)
+
+Six points qui ne figuraient pas au plan et qu'il ne faut pas redécouvrir :
+
+**Le moteur n'a pas été touché, et c'est vérifié.** `computeSide`, `correctionFactor`, `conditionFactor`, `slopeFactor` et `pressureAltitude` sont recopiés à l'identique. Pour que la branche de repli surface de `computeSide` ne se déclenche jamais, l'objet `ac` synthétisé par `buildAircraftFromForm()` remplit **les deux clés** `paved` et `grass` avec la même paire de chiffres. La question revêtue/herbe est traitée dans la couche interface, où l'on peut être honnête sur le fait de n'inventer aucun facteur.
+
+**Décollage et atterrissage sont découplés.** `buildAircraftFromForm()` renvoie **toujours** un objet, mais ne pose la clé `takeoff` que si les deux chiffres du décollage sont présents et strictement positifs, et de même pour `landing`. Conséquence à retenir pour tout consommateur : **tester la clé avant de s'en servir**, car `computeSide` lit `ac[kind][surface]` d'emblée et lèverait une exception sur une manœuvre absente. Le garde est en tête de `renderSide()`. Un roulement saisi sans sa distance 15 m, ou une distance à zéro, comptent comme absents.
+
+**Les silhouettes SVG sont recopiées octet pour octet.** `buildRunwaySvg` retire la balise `<svg>` ouvrante par un `.replace()` sur la chaîne littérale exacte. Reformater ne serait-ce qu'un espace de cette balise imbriquerait un `<svg>` dans un autre, sans la moindre erreur en console. Contrôle automatisable : comparer les chaînes de `assets.js` à celles de `db-flotte.js` après normalisation des fins de ligne (le dépôt est en CRLF, les fichiers écrits en LF).
+
+**`--` est interdit dans un commentaire XML, et un SVG mal formé échoue en silence dans une balise `<img>`.** `icons/icon.svg` et `icons/favicon.svg` nommaient une couleur par sa variable CSS `--navy` : XML invalide. En `<link rel="icon">` le navigateur laisse passer, en `<img>` il refuse sans rien dire en console. Les copies de `app-en/icons/` sont corrigées (et portent désormais `width`/`height` explicites, faute de quoi `naturalWidth` vaut 0). **Les fichiers de la racine restent cassés** : à corriger côté outil du club, hors du périmètre de cette branche.
+
+**L'interrupteur d'unités réécrit les valeurs, pas seulement les libellés.** 800 m doit devenir 2625 dans la case. La marge de sécurité (facteur sans dimension), l'altitude terrain (toujours en pieds), le vent (toujours en nœuds), la pente et les coordonnées ne sont **jamais** convertis. Le `step` du QNH doit suivre l'unité (`0.01` en inHg, sinon `type=number` refuse 29,92). L'aller-retour métrique → impérial → métrique redonne les valeurs exactes ; en revanche l'arrondi entier du champ température en °F introduit une granularité de 0,3 °C, assumée.
+
+**Le service worker a deux gardes, pas une.** `location.protocol.startsWith('http')` **passe** sous Capacitor, qui sert depuis `https://localhost` : le test `!window.Capacitor` doit donc être dans le bloc d'enregistrement du HTML, pas seulement dans `sw.js`. Par ailleurs le worker de la racine efface **tous** les caches qui ne sont pas le sien : il évincera donc `tlperf-v1` à chaque mise à jour du club (sans gravité, les fichiers sont retéléchargés). Le worker anglais, lui, limite volontairement sa purge à son propre préfixe pour ne pas rendre la pareille.
+
+**Le lien vers `privacy.html` est absolu.** Capacitor copie `app-en/` à la racine du web root, donc un `../privacy.html` en sortirait et donnerait un 404 dans l'APK. Le pied de page pointe sur `https://perf-avions-3skt.vercel.app/privacy.html`, qui est aussi l'URL à déclarer au Play Console.
 
 ## Étape 2 — Politique de confidentialité et déploiement web
 
@@ -125,8 +155,19 @@ Fiche préparée en anglais : titre, description courte et longue, catégorie, f
 
 ## Vérification
 
-1. **Navigateur** : ouvrir `app-en/index.html`, vérifier qu'aucune erreur de console n'apparaît sans `db-flotte.js`, que le calcul fonctionne avec des chiffres saisis à la main, et que l'interrupteur d'unités donne des résultats cohérents (une piste de 800 m doit s'afficher 2625 ft et le calcul rendre le même verdict).
-2. **Non-régression** : le fichier `index.html` racine doit rester strictement inchangé. Un `git diff main -- index.html db-flotte.js` doit être vide.
-3. **Preview Vercel** : tester sur téléphone via l'URL de branche, notamment le METAR et l'horloge jour/nuit avec des coordonnées réelles.
-4. **APK** : installer sur le téléphone, vérifier le mode avion (tout doit fonctionner sauf le METAR), l'écran d'acceptation au premier lancement, et l'ouverture du lien café dans le navigateur externe.
-5. **Comparaison croisée** : le test qui prouve que le moteur n'a pas été abîmé. À faire impérativement avec le **WT9 ULM**, dont la référence est bien 0 ft / 15 °C / sans vent (`db-flotte.js:131`) et qui est donc comparable à la fiche minimale. Le WT9 LSA (2000 ft, vent arrière 2 kt, ligne 142) et le Tétras (1000 ft, ligne 187) divergeraient **par construction** et feraient croire à une régression inexistante. Recopier les chiffres du WT9 ULM et une piste de LFSH dans l'appli anglaise : les distances doivent tomber au mètre près.
+Points 1, 2 et 5 **passés le 3 août 2026**, servis depuis `python -m http.server 8744`. Points 3 et 4 en attente des étapes correspondantes.
+
+1. ✅ **Navigateur** : aucune erreur de console. Le calcul fonctionne avec des chiffres saisis à la main ; 800 m s'affiche bien 2625 ft et le verdict est inchangé. Vérifié en plus : `assets.js` retiré (`ASSETS_OK === false`) laisse le **calcul intact** et le schéma de piste dessiné, seules la silhouette et la citation disparaissent ; aucun débordement horizontal en 375 px de large ; METAR mondial fonctionnel (EGKA testé) avec conversion correcte à la copie.
+   **Indépendance des manœuvres** : les quatre combinaisons (décollage seul, atterrissage seul, les deux, aucun) donnent bien la carte remplie d'un côté et le message d'attente de l'autre, avec les mêmes valeurs qu'en saisie complète. Cas limites couverts : roulement sans distance 15 m, distance saisie à zéro, TODA vide alors que la fiche décollage est complète, et bascule en impérial avec une seule manœuvre renseignée.
+2. ✅ **Non-régression** : `git diff HEAD -- index.html db-flotte.js sw.js manifest.json` vide. Seuls des fichiers **nouveaux** sont apparus. L'outil du club, rechargé, calcule toujours (7 avions, 13 terrains, `DB_OK` vrai).
+3. ⏳ **Preview Vercel** : tester sur téléphone via l'URL de branche, notamment le METAR et l'horloge jour/nuit avec des coordonnées réelles.
+4. ⏳ **APK** : installer sur le téléphone, vérifier le mode avion (tout doit fonctionner sauf le METAR), l'écran d'acceptation au premier lancement, et l'ouverture du lien café dans le navigateur externe.
+5. ✅ **Comparaison croisée** : le test qui prouve que le moteur n'a pas été abîmé. Fait avec le **WT9 ULM**, dont la référence est bien 0 ft / 15 °C / sans vent (`db-flotte.js:131`) et qui est donc comparable à la fiche minimale. Le WT9 LSA (2000 ft, vent arrière 2 kt, ligne 142) et le Tétras (1000 ft, ligne 187) divergeraient **par construction** et feraient croire à une régression inexistante — ne pas les utiliser pour ce test.
+   Jeu d'essai retenu, à rejouer tel quel après toute retouche du moteur : WT9 ULM revêtue (75 / 252 au décollage, 75 / 263 à l'atterrissage), LFSH piste 03 (491 ft, QFU 026, TODA 910, LDA 775, plat), 27 °C, QNH 1008, vent 060°/12 kt, marge 1,2.
+   **Résultat attendu, identique dans les deux applis** : décollage 81 / 274 / 329 m pour 910 m disponibles ; atterrissage 81 / 286 / 343 m pour 775 m disponibles. Les huit valeurs sont tombées au mètre près.
+
+## Ce qui reste en suspens
+
+- **Photo de cockpit** : justificatif de droits à réunir avant le dépôt sur le Play Store (décision du 3 août 2026 de la conserver).
+- **`icons/icon.svg` et `icons/favicon.svg` de la racine** : XML invalide (`--` dans un commentaire), donc le favicon de l'outil du club ne s'affiche probablement pas. Correction en une ligne, à faire sur `main`, hors périmètre de cette branche.
+- **Rien n'est commité** sur `applitel` à ce jour, et `privacy.html` n'est pas fusionné dans `main`.
