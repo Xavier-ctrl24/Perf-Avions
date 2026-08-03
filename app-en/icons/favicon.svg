@@ -1,17 +1,14 @@
-<svg viewBox="0 0 512 512" width="512" height="512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Perf Avions">
+<svg viewBox="0 0 512 512" width="512" height="512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Takeoff and Landing Perf">
   <!-- Source de vérité des icônes PNG (icon-192, icon-512, apple-touch-icon) et
        favicon. Avion léger bas-aile vu de dessus, blanc sur le bleu nuit #0d2440.
-       Vue de dessus et non de profil (contrairement à PERF_DB.icons.wt9, dans
-       db-flotte.js) : un profil est 4,6 fois plus large que haut et devient un
+       Vue de dessus et non de profil (contrairement à APP_ASSETS.icons.wt9, dans
+       assets.js) : un profil est 4,6 fois plus large que haut et devient un
        trait illisible une fois enfermé dans un carré de 48 px.
 
        ATTENTION : ne jamais écrire deux tirets consécutifs dans ce commentaire.
-       XML l'interdit, et un SVG mal formé n'est PAS toléré partout : en favicon
-       le navigateur laisse parfois passer, mais dans une balise <img> il refuse
-       en silence, sans rien écrire en console. C'est précisément ce qui est
-       arrivé ici en nommant la couleur par sa variable CSS. Les attributs
-       width/height explicites sont là pour la même raison : sans eux, un SVG
-       chargé en <img> a une naturalWidth nulle. -->
+       XML l'interdit, et un SVG mal formé n'est PAS toléré dans une balise
+       <img> : il échoue en silence, sans rien en console. C'est exactement ce
+       qui est arrivé ici en nommant la couleur par sa variable CSS. -->
   <rect width="512" height="512" rx="64" ry="64" fill="#0d2440"/>
   <g fill="#fff">
     <rect x="171" y="62" width="170" height="9" rx="4.5"/>

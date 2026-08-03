@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Takeoff &amp; Landing Perf</title>
+<meta name="description" content="Privacy policy for the Takeoff &amp; Landing Perf application.">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#17191d">
+<style>
+  :root{
+    --panel:#26292f; --panel-hi:#31353c; --panel-deep:#17191d;
+    --line:#3a3e46; --cream:#ece5d3; --cream-dim:#a49e8f; --phos:#57e08c;
+    --font-placard:"Bahnschrift","Arial Narrow","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;padding:24px;
+    font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+    background:var(--panel-deep) radial-gradient(1100px 700px at 50% -120px,#23262c,var(--panel-deep));
+    color:var(--cream);line-height:1.6;
+  }
+  main{
+    max-width:760px;margin:0 auto;padding:28px 32px;
+    background:linear-gradient(180deg,var(--panel-hi),var(--panel) 16px);
+    border:1px solid #05060a;border-radius:12px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 5px 14px rgba(0,0,0,.45);
+  }
+  h1{
+    font-size:1.05rem;font-family:var(--font-placard);text-transform:uppercase;
+    letter-spacing:2.2px;margin:0 0 6px;display:flex;align-items:center;gap:10px;
+  }
+  h1::before{
+    content:"";width:9px;height:9px;border-radius:50%;flex:none;background:var(--phos);
+    box-shadow:0 0 9px var(--phos);
+  }
+  .updated{font-size:.78rem;color:var(--cream-dim);margin:0 0 22px;}
+  h2{
+    font-size:.78rem;font-family:var(--font-placard);text-transform:uppercase;
+    letter-spacing:1.6px;color:var(--cream-dim);font-weight:700;
+    border-bottom:1px solid var(--line);padding-bottom:7px;margin:26px 0 12px;
+  }
+  p,li{font-size:.9rem;}
+  ul{padding-left:20px;}
+  strong{color:#fff;}
+  a{color:var(--phos);}
+  footer{max-width:760px;margin:18px auto 0;font-size:.75rem;color:var(--cream-dim);text-align:center;}
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Privacy Policy</h1>
+  <p class="updated">Application: <strong>Takeoff &amp; Landing Perf</strong> (package <code>app.perfavions.runwayperf</code>). Last updated: 3 August 2026.</p>
+
+  <h2>The short version</h2>
+  <p>This application collects nothing, stores nothing on any server, and has no user accounts. Everything you type stays on your device. There is no analytics, no advertising, no tracking, and no third-party SDK of any kind.</p>
+
+  <h2>Data we collect</h2>
+  <p><strong>None.</strong> We do not collect, transmit, sell, or share any personal data. We have no server that could receive it, and no way to identify you.</p>
+
+  <h2>Data stored on your device</h2>
+  <p>So that you do not have to retype everything before each flight, the application saves the values you enter in your device's local browser storage (<code>localStorage</code>). This includes:</p>
+  <ul>
+    <li>the aircraft performance figures you enter, and the optional name you give them;</li>
+    <li>the runway data you enter, including any latitude and longitude you choose to type in;</li>
+    <li>the weather values and safety margin you enter;</li>
+    <li>your unit preference (metric or imperial) and the fact that you accepted the disclaimer.</li>
+  </ul>
+  <p>This information never leaves your device. It is not readable by us or by anyone else. Uninstalling the application, or clearing the app's storage from your device settings, deletes it permanently.</p>
+
+  <h2>Network access</h2>
+  <p>The application makes exactly one kind of network request, and only when you press the &ldquo;Fetch METAR&rdquo; button:</p>
+  <ul>
+    <li>it sends the four-letter ICAO aerodrome code you typed to <a href="https://metar.vatsim.net/" target="_blank" rel="noopener noreferrer">metar.vatsim.net</a>, and if that service is unavailable to <a href="https://aviationweather.gov/" target="_blank" rel="noopener noreferrer">aviationweather.gov</a> (NOAA Aviation Weather Center), in order to retrieve the public weather report for that aerodrome.</li>
+  </ul>
+  <p>No personal data is included in that request: it contains the aerodrome code and nothing else. As with any internet request, the operators of those services receive your device's IP address and apply their own privacy policies, which are outside our control. If you never press that button, the application makes no network request at all and works fully offline.</p>
+
+  <h2>Location</h2>
+  <p>The application does <strong>not</strong> request or use your device's location. The optional latitude and longitude fields are typed in by you, taken from your aerodrome chart, and are used only for an on-device sunrise and sunset calculation. The app requests no location permission from Android.</p>
+
+  <h2>Permissions</h2>
+  <p>The Android application requests a single permission, <code>INTERNET</code>, used solely for the METAR request described above. It requests no access to storage, contacts, camera, microphone or location.</p>
+
+  <h2>Children</h2>
+  <p>This is a flight-preparation tool for pilots. It is not directed at children and collects no data from anyone, of any age.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>If this policy changes, the updated version will be published at this same address with a new date at the top.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about this policy: <a href="mailto:shinai24@gmail.com">shinai24@gmail.com</a>.</p>
+
+  <h2>Not a privacy matter, but worth repeating</h2>
+  <p>This application assists flight preparation and does not replace the aircraft flight manual. The pilot in command remains solely responsible.</p>
+
+</main>
+<footer>Takeoff &amp; Landing Perf</footer>
+</body>
+</html>
