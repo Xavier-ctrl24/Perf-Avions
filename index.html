@@ -300,7 +300,13 @@
   header .hangar-quote:empty{display:none;}
   .hangar-quote::before{content:"✈ ";font-style:normal;color:var(--phos);}
 
-  /* Bouton de soutien « M'offrir un café », désormais dans l'en-tête */
+  /* Ligne d'actions du bas de page, seul occupant : le bouton de soutien */
+  .print-row{
+    display:flex;justify-content:center;align-items:center;
+    gap:12px;flex-wrap:wrap;margin-top:18px;
+  }
+
+  /* Bouton de soutien « M'offrir un café », en bas de page */
   .coffee-btn{
     display:inline-flex;align-items:center;gap:8px;
     padding:10px 16px;border-radius:999px;
@@ -365,13 +371,6 @@
       <img src="icons/icon.svg" class="logo" alt="">
       <h1>Takeoff / Landing Performance</h1>
     </div>
-    <!-- Lien de soutien, purement décoratif : aucun rôle dans les calculs, masqué
-         à l'impression. rel="noopener" empêche la page ouverte d'accéder à
-         celle-ci (bonne pratique avec target="_blank"). -->
-    <a class="coffee-btn no-print" href="https://buymeacoffee.com/xavier24"
-       target="_blank" rel="noopener noreferrer">
-      <span class="cup" aria-hidden="true">☕</span> M'offrir un café
-    </a>
     <div class="hangar-quote no-print" id="hangarQuote"></div>
   </header>
 
@@ -526,6 +525,16 @@
 
   <div class="disclaimer">
     <strong>Avertissement.</strong> Cet outil est une aide à la préparation du vol. Les corrections température/altitude/vent sont extrapolées faute d'abaque complet pour la plupart de ces avions (voir « Méthode de calcul » et les avions sélectionnés). Il ne remplace pas le Manuel de Vol officiel de chaque appareil, le bulletin météo du jour, ni le jugement du commandant de bord. Vérifiez systématiquement les marges réelles avant chaque décollage et atterrissage.
+  </div>
+
+  <div class="print-row no-print">
+    <!-- Lien de soutien, purement décoratif : aucun rôle dans les calculs, masqué à l'impression.
+         En bas de page à dessein : c'est une demande, elle vient après le service rendu, pas avant.
+         rel="noopener" empêche la page ouverte d'accéder à celle-ci (bonne pratique avec target="_blank"). -->
+    <a class="coffee-btn" href="https://buymeacoffee.com/xavier24"
+       target="_blank" rel="noopener noreferrer">
+      <span class="cup" aria-hidden="true">☕</span> M'offrir un café
+    </a>
   </div>
 
   <footer>Calculateur personnel · Aéroclub de Haguenau · données des manuels de vol de chaque avion et des cartes VAC SIA citées dans la base</footer>

@@ -297,8 +297,11 @@
      hexadécimal et disparaît, ce qui collait l'avion au texte. */
   .hangar-quote::before{content:"\2708\00a0";font-style:normal;color:var(--phos);}
 
-  /* Units switch and coffee button share the right-hand side of the header. */
-  .header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  /* Bottom action row, single occupant: the support button. */
+  .print-row{
+    display:flex;justify-content:center;align-items:center;
+    gap:12px;flex-wrap:wrap;margin-top:18px;
+  }
 
   .coffee-btn{
     display:inline-flex;align-items:center;gap:8px;
@@ -374,17 +377,9 @@
       <img src="icons/icon.svg" class="logo" alt="">
       <h1>Takeoff &amp; Landing Perf</h1>
     </div>
-    <div class="header-actions">
-      <div class="unit-switch" role="group" aria-label="Units">
-        <button type="button" id="unitMetricBtn" onclick="setUnits('metric')">Metric</button>
-        <button type="button" id="unitImperialBtn" onclick="setUnits('imperial')">Imperial</button>
-      </div>
-      <!-- Support link, pure decoration: no role in any computation.
-           rel="noopener" prevents the opened page from reaching back into this one. -->
-      <a class="coffee-btn" href="https://buymeacoffee.com/xavier24"
-         target="_blank" rel="noopener noreferrer">
-        <span class="cup" aria-hidden="true">&#9749;</span> Buy me a coffee
-      </a>
+    <div class="unit-switch" role="group" aria-label="Units">
+      <button type="button" id="unitMetricBtn" onclick="setUnits('metric')">Metric</button>
+      <button type="button" id="unitImperialBtn" onclick="setUnits('imperial')">Imperial</button>
     </div>
     <div class="hangar-quote" id="hangarQuote"></div>
   </header>
@@ -607,6 +602,15 @@
     <strong>Warning.</strong> This tool assists flight preparation. Its altitude, temperature, wind and slope corrections are approximations applied to figures you supply, not certified performance data. It does not replace your aircraft's official Flight Manual, the actual weather of the day, or the judgement of the pilot in command. Always check your real margins before every takeoff and landing.
   </div>
 
+  <div class="print-row">
+    <!-- Support link, pure decoration: no role in any computation. At the bottom
+         on purpose: it is an ask, and an ask comes after the service, not before.
+         rel="noopener" prevents the opened page from reaching back into this one. -->
+    <a class="coffee-btn" href="https://buymeacoffee.com/xavier24"
+       target="_blank" rel="noopener noreferrer">
+      <span class="cup" aria-hidden="true">&#9749;</span> Buy me a coffee
+    </a>
+  </div>
 
   <!-- The privacy link is ABSOLUTE on purpose. Capacitor copies app-en/ to the
        web root, so a relative "../privacy.html" would escape it and 404 inside
