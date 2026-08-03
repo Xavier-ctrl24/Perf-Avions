@@ -29,20 +29,38 @@
 
 window.APP_ASSETS = {
 
-  /* Hangar wisdom: pilot proverbs (aviation folklore, house rewordings),
-     drawn at random on each load. Traduites de PERF_DB.quotes. */
-  "quotes": [
-    "A good landing is one you walk away from. A great one is when the aircraft can be used again.",
-    "Better to be down here wishing you were up there than up there wishing you were down here.",
-    "The three most useless things in aviation: the fuel still in the truck, the runway behind you, and the altitude above you.",
-    "The propeller is just a fan to keep the pilot cool. Proof: when it stops, the pilot starts sweating.",
-    "Takeoff is optional. Landing is mandatory.",
-    "There are old pilots and there are bold pilots, but there are very few old, bold pilots.",
-    "A safety margin is worth nothing at all, right up to the day it is worth everything.",
-    "Aviate, navigate, communicate. The coffee can wait for the hangar.",
-    "The only truly dangerous cloud is the one with a mountain inside it.",
-    "When in doubt, go around. Nobody has ever regretted a go-around."
-  ],
+  /* Hangar wisdom: pilot proverbs (aviation folklore, house rewordings), drawn at
+     random on each load. Les deux listes sont INDEXÉES EN PARALLÈLE : la citation
+     n° 3 en anglais est la citation n° 3 en français. index.html tire un index
+     une seule fois et se contente d'échanger la langue au basculement, pour que
+     l'en-tête ne saute pas à chaque clic. Ajouter une citation, c'est l'ajouter
+     AU MÊME RANG dans les deux listes. */
+  "quotes": {
+    "en": [
+      "A good landing is one you walk away from. A great one is when the aircraft can be used again.",
+      "Better to be down here wishing you were up there than up there wishing you were down here.",
+      "The three most useless things in aviation: the fuel still in the truck, the runway behind you, and the altitude above you.",
+      "The propeller is just a fan to keep the pilot cool. Proof: when it stops, the pilot starts sweating.",
+      "Takeoff is optional. Landing is mandatory.",
+      "There are old pilots and there are bold pilots, but there are very few old, bold pilots.",
+      "A safety margin is worth nothing at all, right up to the day it is worth everything.",
+      "Aviate, navigate, communicate. The coffee can wait for the hangar.",
+      "The only truly dangerous cloud is the one with a mountain inside it.",
+      "When in doubt, go around. Nobody has ever regretted a go-around."
+    ],
+    "fr": [
+      "Un bon atterrissage, c'est quand tout le monde ressort de l'avion. Un excellent, c'est quand l'avion peut resservir.",
+      "Mieux vaut être en bas à regretter de ne pas être en l'air, que l'inverse.",
+      "Les trois choses les plus inutiles en aviation : le carburant resté au camion, la piste restée derrière soi, et l'altitude restée au-dessus.",
+      "L'hélice est un ventilateur qui sert à rafraîchir le pilote : la preuve, quand elle s'arrête, il se met à transpirer.",
+      "Décoller est facultatif. Atterrir est obligatoire.",
+      "Il y a de vieux pilotes et des pilotes audacieux, mais très peu de vieux pilotes audacieux.",
+      "La marge de sécurité ne sert à rien... jusqu'au jour où elle sert à tout.",
+      "Piloter d'abord, naviguer ensuite, communiquer enfin. Le café attendra le hangar.",
+      "Le seul nuage vraiment dangereux est celui qui cache une montagne.",
+      "En cas de doute, remets les gaz. Personne n'a jamais regretté une remise de gaz."
+    ]
+  },
 
   /* Silhouettes SVG schématiques (vue de côté), non JSON-compatibles.
      Recopiées à l'identique depuis db-flotte.js — voir l'avertissement en tête

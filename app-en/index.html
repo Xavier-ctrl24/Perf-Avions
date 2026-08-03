@@ -76,6 +76,11 @@
     box-shadow:0 0 9px var(--phos), inset 0 -1px 1px rgba(0,0,0,.4);
   }
 
+  /* Language and units, two identical rockers side by side. Wrapping them in one
+     flex cluster keeps them together when the header wraps on a phone, instead of
+     letting space-between push them to opposite ends of the row. */
+  .header-controls{display:flex;align-items:center;gap:10px;flex:none;flex-wrap:wrap;}
+
   /* Units switch, a two-position cockpit rocker */
   .unit-switch{display:flex;align-items:center;gap:0;flex:none;
     border:1px solid #000;border-radius:8px;overflow:hidden;
@@ -119,13 +124,22 @@
     display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;
   }
   .field{display:flex;flex-direction:column;gap:5px;}
+  /* Labels grow to fill the grid cell so the boxes all sit on the SAME baseline,
+     whatever the number of lines a label wraps onto. Without this, "Takeoff
+     distance available (TODA, m)" wraps to two lines and shoves its input one
+     line lower than its neighbours: the vertical stagger in the Runway panel. */
   .field label{
     font-size:.72rem;color:var(--cream-dim);font-weight:700;
     font-family:var(--font-placard);text-transform:uppercase;letter-spacing:.8px;
+    flex:1;display:flex;align-items:flex-end;flex-wrap:wrap;gap:0 4px;
   }
   .field .unit-hint{font-size:.68rem;color:#7d7869;font-weight:400;text-transform:none;letter-spacing:0;}
+  /* line-height and height are pinned on BOTH: left to themselves a <select> and
+     an <input> resolve to slightly different heights with identical padding, which
+     is the second half of the Runway-panel stagger. */
   select,input[type=number],input[type=text]{
     padding:9px 10px;border:1px solid #000;border-radius:7px;
+    line-height:1.25;height:38px;
     font-size:.95rem;font-family:inherit;
     background:#101317;color:var(--needle);
     box-shadow:inset 0 2px 5px rgba(0,0,0,.55), 0 1px 0 rgba(255,255,255,.05);
@@ -346,6 +360,23 @@
     text-shadow:0 0 8px rgba(87,224,140,.5);
   }
   .accept-box button:hover{filter:brightness(1.2);}
+  /* The overlay's own language rocker: width:auto so it does not inherit the
+     full-width sizing of the accept button below it. */
+  /* inline-flex, not the inherited flex: as a block-level flex container the
+     rocker stretched to the full width of the box, framing 200 px of empty space
+     next to its two 50 px halves. */
+  .accept-box .accept-lang{margin-top:6px;display:inline-flex;}
+  /* border:0 restated because .accept-box button{border:1px solid #000} comes
+     later in this stylesheet at equal specificity: without it each half drew its
+     own box and the two stopped reading as one switch. */
+  .accept-box .accept-lang button{width:auto;margin-top:0;border:0;
+    background:#1b1f24;color:var(--cream-dim);border-radius:0;
+    padding:9px 15px;font-size:.75rem;letter-spacing:1.1px;box-shadow:none;text-shadow:none;}
+  .accept-box .accept-lang button + button{border-left:1px solid #000;}
+  .accept-box .accept-lang button.on{
+    background:var(--green-bg);color:var(--phos);
+    box-shadow:inset 0 0 12px rgba(87,224,140,.25);
+    text-shadow:0 0 8px rgba(87,224,140,.55);}
 
   @media (prefers-reduced-motion:reduce){
     *{animation:none !important;transition:none !important;}
@@ -358,169 +389,160 @@
      pilot who has already accepted never sees it flash. -->
 <div class="accept-overlay hidden" id="acceptOverlay">
   <div class="accept-box">
-    <h2>Before you use this app</h2>
-    <p>This tool assists flight preparation and does not replace the aircraft flight manual. The pilot in command remains solely responsible.</p>
-    <p class="small">It contains no aircraft or aerodrome data of its own: every figure it uses is one you enter, taken from your own flight manual and your own aerodrome chart. Its corrections for altitude, temperature, wind and slope are approximations, described in full under &ldquo;Method and assumptions&rdquo;.</p>
-    <button type="button" id="acceptBtn">I understand &mdash; continue</button>
+    <h2 data-i18n="accept.title">Before you use this app</h2>
+    <p data-i18n="accept.p1">This tool assists flight preparation and does not replace the aircraft flight manual. The pilot in command remains solely responsible.</p>
+    <p class="small" data-i18n="accept.p2">It contains no aircraft or aerodrome data of its own: every figure it uses is one you enter, taken from your own flight manual and your own aerodrome chart. Its corrections for altitude, temperature, wind and slope are approximations, described in full under &ldquo;Method and assumptions&rdquo;.</p>
+    <!-- The overlay covers the header, so the language toggle is unreachable until
+         it is dismissed: it carries its own, and both stay in sync. -->
+    <div class="unit-switch accept-lang" role="group" aria-label="Language">
+      <button type="button" id="langFrBtn2" onclick="setLang('fr')">FR</button>
+      <button type="button" id="langEnBtn2" onclick="setLang('en')">EN</button>
+    </div>
+    <button type="button" id="acceptBtn" data-i18n="accept.btn">I understand &mdash; continue</button>
   </div>
 </div>
 
 <div class="app">
 
   <div class="update-banner" id="updateBanner">
-    <span><strong>A new version is available.</strong> Reload to apply it.</span>
-    <button type="button" id="updateReloadBtn">Reload</button>
+    <span data-i18n-html="update.text"><strong>A new version is available.</strong> Reload to apply it.</span>
+    <button type="button" id="updateReloadBtn" data-i18n="update.btn">Reload</button>
   </div>
 
   <header>
     <div class="brand">
       <img src="icons/icon.svg" class="logo" alt="">
-      <h1>Takeoff &amp; Landing Perf</h1>
+      <h1 data-i18n="app.title">Takeoff &amp; Landing Perf</h1>
     </div>
-    <div class="unit-switch" role="group" aria-label="Units">
-      <button type="button" id="unitMetricBtn" onclick="setUnits('metric')">Metric</button>
-      <button type="button" id="unitImperialBtn" onclick="setUnits('imperial')">Imperial</button>
+    <!-- Language and units travel together: two identical rockers in one cluster,
+         so a 375 px screen wraps them as a block rather than splitting them. -->
+    <div class="header-controls">
+      <div class="unit-switch" role="group" id="langGroup" aria-label="Language">
+        <button type="button" id="langFrBtn" onclick="setLang('fr')">FR</button>
+        <button type="button" id="langEnBtn" onclick="setLang('en')">EN</button>
+      </div>
+      <div class="unit-switch" role="group" id="unitGroup" aria-label="Units">
+        <button type="button" id="unitMetricBtn" onclick="setUnits('metric')" data-i18n="units.metric">Metric</button>
+        <button type="button" id="unitImperialBtn" onclick="setUnits('imperial')" data-i18n="units.imperial">Imperial</button>
+      </div>
     </div>
     <div class="hangar-quote" id="hangarQuote"></div>
   </header>
 
   <section class="panel">
-    <h2>Aircraft &mdash; from your flight manual</h2>
+    <h2 data-i18n="ac.head">Aircraft &mdash; from your flight manual</h2>
 
     <div class="grid">
       <div class="field">
-        <label for="acName">Aircraft (optional)</label>
-        <input type="text" id="acName" placeholder="e.g. C172S / F-GXYZ" oninput="recompute()">
-      </div>
-      <div class="field">
-        <label for="acIcon">Silhouette</label>
-        <select id="acIcon" oninput="recompute()">
-          <option value="lowwing">Low wing, tricycle gear</option>
-          <option value="highwing">High wing, tricycle gear</option>
-          <option value="stol">High wing STOL, taildragger</option>
-          <option value="wt9">Low wing, composite / LSA</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="acSurfaceRef">Your figures are for a</label>
-        <select id="acSurfaceRef" oninput="recompute()">
-          <option value="paved">Paved runway</option>
-          <option value="grass">Grass / unpaved runway</option>
-        </select>
+        <label for="acName"><span data-i18n="ac.name">Aircraft (optional)</span></label>
+        <input type="text" id="acName" data-i18n-ph="ac.name.ph" placeholder="e.g. C172S / F-GXYZ" oninput="recompute()">
       </div>
     </div>
 
     <!-- Takeoff and landing are computed independently: preparing a departure
          should not require digging out the landing figures too. -->
-    <p class="panel-note">Fill in only the manoeuvre you need. Takeoff and landing are worked out independently of each other.</p>
+    <p class="panel-note" data-i18n="ac.note">Fill in only the manoeuvre you need. Takeoff and landing are worked out independently of each other.</p>
 
-    <h3 class="sub">Takeoff</h3>
+    <h3 class="sub" data-i18n="takeoff">Takeoff</h3>
     <div class="grid">
       <div class="field">
-        <label for="acToRoll">Ground roll <span class="unit-hint" data-u="dist"></span></label>
-        <input type="number" id="acToRoll" min="0" placeholder="e.g. 300" oninput="recompute()">
+        <label for="acToRoll"><span data-i18n="roll">Ground roll</span> <span class="unit-hint" data-u="dist"></span></label>
+        <input type="number" id="acToRoll" min="0" data-i18n-ph="ph.300" placeholder="e.g. 300" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="acToDist">Over 15 m / 50 ft obstacle <span class="unit-hint" data-u="dist"></span></label>
-        <input type="number" id="acToDist" min="0" placeholder="e.g. 500" oninput="recompute()">
+        <label for="acToDist"><span data-i18n="dist15">Over 15 m / 50 ft obstacle</span> <span class="unit-hint" data-u="dist"></span></label>
+        <input type="number" id="acToDist" min="0" data-i18n-ph="ph.500" placeholder="e.g. 500" oninput="recompute()">
       </div>
     </div>
 
-    <h3 class="sub">Landing</h3>
+    <h3 class="sub" data-i18n="landing">Landing</h3>
     <div class="grid">
       <div class="field">
-        <label for="acLdRoll">Ground roll <span class="unit-hint" data-u="dist"></span></label>
-        <input type="number" id="acLdRoll" min="0" placeholder="e.g. 200" oninput="recompute()">
+        <label for="acLdRoll"><span data-i18n="roll">Ground roll</span> <span class="unit-hint" data-u="dist"></span></label>
+        <input type="number" id="acLdRoll" min="0" data-i18n-ph="ph.200" placeholder="e.g. 200" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="acLdDist">Over 15 m / 50 ft obstacle <span class="unit-hint" data-u="dist"></span></label>
-        <input type="number" id="acLdDist" min="0" placeholder="e.g. 400" oninput="recompute()">
+        <label for="acLdDist"><span data-i18n="dist15">Over 15 m / 50 ft obstacle</span> <span class="unit-hint" data-u="dist"></span></label>
+        <input type="number" id="acLdDist" min="0" data-i18n-ph="ph.400" placeholder="e.g. 400" oninput="recompute()">
       </div>
     </div>
 
-    <h3 class="sub">Optional</h3>
+    <h3 class="sub" data-i18n="optional">Optional</h3>
     <div class="grid">
       <div class="field">
-        <label for="acMtow">Max takeoff weight <span class="unit-hint" data-u="mass"></span></label>
-        <input type="number" id="acMtow" min="0" placeholder="optional" oninput="recompute()">
+        <label for="acMtow"><span data-i18n="ac.mtow">Max takeoff weight</span> <span class="unit-hint" data-u="mass"></span></label>
+        <input type="number" id="acMtow" min="0" data-i18n-ph="ph.optional" placeholder="optional" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="acXwind">Max demonstrated crosswind <span class="unit-hint">(kt)</span></label>
-        <input type="number" id="acXwind" min="0" placeholder="optional" oninput="recompute()">
+        <label for="acXwind"><span data-i18n="ac.xwind">Max demonstrated crosswind</span> <span class="unit-hint">(kt)</span></label>
+        <input type="number" id="acXwind" min="0" data-i18n-ph="ph.optional" placeholder="optional" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="acGrassPenalty">Grass penalty <span class="unit-hint">(%, your own figure)</span></label>
-        <input type="number" id="acGrassPenalty" min="0" placeholder="optional" oninput="recompute()">
+        <!-- No reference-surface selector any more: the penalty is simply applied
+             when the runway below is declared grass. Nothing is invented, the
+             figure is the pilot's own. -->
+        <label for="acGrassPenalty"><span data-i18n="ac.grass">Grass penalty</span> <span class="unit-hint" data-i18n="ac.grass.u">(%, applied on grass runways)</span></label>
+        <input type="number" id="acGrassPenalty" min="0" data-i18n-ph="ph.optional" placeholder="optional" oninput="recompute()">
       </div>
     </div>
 
     <!-- The single most consequential assumption in this app. Permanent, never
          collapsible, and repeated in the Method panel. -->
     <div class="caution">
-      <span class="caution-title">&#9888; Reference conditions assumed</span>
-      Figures are assumed to be sea level, <span id="refTempInline">15&nbsp;°C</span>, no wind. If your manual's table is referenced to other conditions, this app will underestimate your distances.
+      <span class="caution-title" data-i18n="ac.refwarn.title">&#9888; Reference conditions assumed</span>
+      <span data-i18n="ac.refwarn.a">Figures are assumed to be sea level,</span> <span id="refTempInline">15&nbsp;°C</span><span data-i18n="ac.refwarn.b">, no wind. If your manual's table is referenced to other conditions, this app will underestimate your distances.</span>
     </div>
-
-    <div class="caution hidden" id="surfaceWarn"></div>
   </section>
 
   <section class="panel">
-    <h2>Runway &mdash; from your aerodrome chart</h2>
+    <h2 data-i18n="rw.head">Runway &mdash; from your aerodrome chart</h2>
     <div class="grid">
       <div class="field">
-        <label for="rwName">Aerodrome / runway (optional)</label>
-        <input type="text" id="rwName" placeholder="e.g. EGKA RWY 25" oninput="recompute()">
+        <label for="rwName"><span data-i18n="rw.name">Aerodrome / runway (optional)</span></label>
+        <input type="text" id="rwName" data-i18n-ph="rw.name.ph" placeholder="e.g. EGKA RWY 25" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="rwElev">Field elevation <span class="unit-hint">(ft)</span></label>
+        <label for="rwElev"><span data-i18n="rw.elev">Field elevation</span> <span class="unit-hint">(ft)</span></label>
         <input type="number" id="rwElev" value="0" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="rwSurface">Actual runway surface</label>
+        <label for="rwSurface"><span data-i18n="rw.surface">Actual runway surface</span></label>
         <select id="rwSurface" oninput="recompute()">
-          <option value="paved">Paved</option>
-          <option value="grass">Grass / unpaved</option>
+          <option value="paved" data-i18n="surface.paved">Paved</option>
+          <option value="grass" data-i18n="surface.grass">Grass / unpaved</option>
         </select>
       </div>
       <div class="field">
-        <label for="rwQFU">Runway direction <span class="unit-hint">(° magnetic)</span></label>
+        <label for="rwQFU"><span data-i18n="rw.qfu">Runway direction</span> <span class="unit-hint" data-i18n="u.mag">(° magnetic)</span></label>
         <input type="number" id="rwQFU" value="0" min="0" max="360" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="rwTODA">Takeoff distance available <span class="unit-hint" data-u="toda"></span></label>
+        <label for="rwTODA"><span data-i18n="rw.toda">Takeoff distance available</span> <span class="unit-hint" data-u="toda"></span></label>
         <input type="number" id="rwTODA" value="800" min="0" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="rwLDA">Landing distance available <span class="unit-hint" data-u="lda"></span></label>
+        <label for="rwLDA"><span data-i18n="rw.lda">Landing distance available</span> <span class="unit-hint" data-u="lda"></span></label>
         <input type="number" id="rwLDA" value="800" min="0" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="rwSlope">Slope <span class="unit-hint">(%, uphill positive)</span></label>
+        <label for="rwSlope"><span data-i18n="rw.slope">Slope</span> <span class="unit-hint" data-i18n="u.slope">(%, uphill positive)</span></label>
         <input type="number" id="rwSlope" value="0" step="0.1" oninput="recompute()">
-      </div>
-      <div class="field">
-        <label for="rwLat">Latitude <span class="unit-hint">(decimal, N positive)</span></label>
-        <input type="number" id="rwLat" step="0.0001" min="-90" max="90" placeholder="optional" oninput="recompute()">
-      </div>
-      <div class="field">
-        <label for="rwLon">Longitude <span class="unit-hint">(decimal, E positive)</span></label>
-        <input type="number" id="rwLon" step="0.0001" min="-180" max="180" placeholder="optional" oninput="recompute()">
       </div>
     </div>
     <div class="hint" id="slopeHint"></div>
   </section>
 
   <section class="panel">
-    <h2>Weather &amp; margin</h2>
+    <h2 data-i18n="wx.head">Weather &amp; margin</h2>
 
     <div class="metar-block">
       <div class="metar-row">
         <div class="field">
-          <label for="metarIcao">METAR &mdash; ICAO code</label>
-          <input type="text" id="metarIcao" maxlength="4" placeholder="EGKA" style="text-transform:uppercase;">
+          <label for="metarIcao"><span data-i18n="wx.metar">METAR &mdash; ICAO code</span></label>
+          <input type="text" id="metarIcao" maxlength="4" data-i18n-ph="wx.metar.ph" placeholder="EGKA" style="text-transform:uppercase;">
         </div>
-        <button type="button" id="metarFetchBtn" onclick="fetchMetar()">Fetch METAR</button>
-        <button type="button" id="metarCopyBtn" class="secondary" onclick="copyMetarToForm()" disabled>Copy to calculation</button>
+        <button type="button" id="metarFetchBtn" onclick="fetchMetar()" data-i18n="wx.fetch">Fetch METAR</button>
+        <button type="button" id="metarCopyBtn" class="secondary" onclick="copyMetarToForm()" disabled data-i18n="wx.copy">Copy to calculation</button>
       </div>
       <div class="metar-raw" id="metarRaw" style="display:none;"></div>
       <div class="metar-summary" id="metarSummary"></div>
@@ -529,31 +551,30 @@
 
     <div class="grid">
       <div class="field">
-        <label for="temp">Temperature <span class="unit-hint" data-u="temp"></span></label>
+        <label for="temp"><span data-i18n="wx.temp">Temperature</span> <span class="unit-hint" data-u="temp"></span></label>
         <input type="number" id="temp" value="15" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="qnh">QNH <span class="unit-hint" data-u="press"></span></label>
+        <label for="qnh"><span data-i18n="wx.qnh">QNH</span> <span class="unit-hint" data-u="press"></span></label>
         <input type="number" id="qnh" value="1013" step="1" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="windDir">Wind direction <span class="unit-hint">(° magnetic)</span></label>
+        <label for="windDir"><span data-i18n="wx.windDir">Wind direction</span> <span class="unit-hint" data-i18n="u.mag">(° magnetic)</span></label>
         <input type="number" id="windDir" value="0" min="0" max="360" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="windSpeed">Wind speed <span class="unit-hint">(kt)</span></label>
+        <label for="windSpeed"><span data-i18n="wx.windSpeed">Wind speed</span> <span class="unit-hint">(kt)</span></label>
         <input type="number" id="windSpeed" value="0" min="0" oninput="recompute()">
       </div>
       <div class="field">
-        <label for="margin">Safety margin <span class="unit-hint">(factor &times;)</span></label>
+        <label for="margin"><span data-i18n="wx.margin">Safety margin</span> <span class="unit-hint" data-i18n="u.factor">(factor &times;)</span></label>
         <input type="number" id="margin" value="1.2" step="0.05" min="1" oninput="recompute()">
       </div>
     </div>
 
     <div class="wind-panel" style="margin-top:16px;">
       <div class="wind-metric wind-rose-tile"><div class="label" id="windRoseLabel">Wind</div><div id="windRose"></div><div class="tile-sub" id="windCrossWarn"></div></div>
-      <div class="wind-metric wind-rose-tile"><div class="label">Altimeter &mdash; field / density</div><div id="altimeter"></div></div>
-      <div class="wind-metric wind-rose-tile" id="nightTile"><div class="label" id="nightLabel">Aeronautical day / night</div><div id="nightClock"></div><div class="tile-sub" id="nightSub"></div></div>
+      <div class="wind-metric wind-rose-tile"><div class="label" data-i18n="inst.alt">Altimeter &mdash; field / density</div><div id="altimeter"></div></div>
     </div>
   </section>
 
@@ -561,15 +582,15 @@
     <div class="card">
       <div class="card-head">
         <div class="ic" id="toIcon"></div>
-        <h3>Takeoff</h3>
+        <h3 data-i18n="takeoff">Takeoff</h3>
       </div>
       <div class="ref" id="toRef"></div>
       <div class="status-badge" id="toStatus"></div>
       <div class="metrics">
-        <div class="metric"><div class="label">Ground roll</div><div class="value" id="toRoll">&ndash;</div></div>
-        <div class="metric"><div class="label">Over 15 m / 50 ft</div><div class="value" id="toDist">&ndash;</div></div>
-        <div class="metric"><div class="label">With margin</div><div class="value" id="toMargin">&ndash;</div></div>
-        <div class="metric"><div class="label">Available</div><div class="value" id="toAvail">&ndash;</div></div>
+        <div class="metric"><div class="label" data-i18n="roll">Ground roll</div><div class="value" id="toRoll">&ndash;</div></div>
+        <div class="metric"><div class="label" data-i18n="m.dist15">Over 15 m / 50 ft</div><div class="value" id="toDist">&ndash;</div></div>
+        <div class="metric"><div class="label" data-i18n="m.margin">With margin</div><div class="value" id="toMargin">&ndash;</div></div>
+        <div class="metric"><div class="label" data-i18n="m.avail">Available</div><div class="value" id="toAvail">&ndash;</div></div>
       </div>
       <div class="runway-svg-wrap" id="toViz"></div>
       <div id="toNote"></div>
@@ -578,15 +599,15 @@
     <div class="card">
       <div class="card-head">
         <div class="ic" id="ldIcon"></div>
-        <h3>Landing</h3>
+        <h3 data-i18n="landing">Landing</h3>
       </div>
       <div class="ref" id="ldRef"></div>
       <div class="status-badge" id="ldStatus"></div>
       <div class="metrics">
-        <div class="metric"><div class="label">Ground roll</div><div class="value" id="ldRoll">&ndash;</div></div>
-        <div class="metric"><div class="label">Over 15 m / 50 ft</div><div class="value" id="ldDist">&ndash;</div></div>
-        <div class="metric"><div class="label">With margin</div><div class="value" id="ldMargin">&ndash;</div></div>
-        <div class="metric"><div class="label">Available</div><div class="value" id="ldAvail">&ndash;</div></div>
+        <div class="metric"><div class="label" data-i18n="roll">Ground roll</div><div class="value" id="ldRoll">&ndash;</div></div>
+        <div class="metric"><div class="label" data-i18n="m.dist15">Over 15 m / 50 ft</div><div class="value" id="ldDist">&ndash;</div></div>
+        <div class="metric"><div class="label" data-i18n="m.margin">With margin</div><div class="value" id="ldMargin">&ndash;</div></div>
+        <div class="metric"><div class="label" data-i18n="m.avail">Available</div><div class="value" id="ldAvail">&ndash;</div></div>
       </div>
       <div class="runway-svg-wrap" id="ldViz"></div>
       <div id="ldNote"></div>
@@ -594,11 +615,11 @@
   </section>
 
   <details class="method">
-    <summary>Method and assumptions</summary>
+    <summary data-i18n="method.title">Method and assumptions</summary>
     <div class="content" id="methodContent"></div>
   </details>
 
-  <div class="disclaimer">
+  <div class="disclaimer" data-i18n-html="disclaimer">
     <strong>Warning.</strong> This tool assists flight preparation. Its altitude, temperature, wind and slope corrections are approximations applied to figures you supply, not certified performance data. It does not replace your aircraft's official Flight Manual, the actual weather of the day, or the judgement of the pilot in command. Always check your real margins before every takeoff and landing.
   </div>
 
@@ -608,15 +629,15 @@
          rel="noopener" prevents the opened page from reaching back into this one. -->
     <a class="coffee-btn" href="https://buymeacoffee.com/xavier24"
        target="_blank" rel="noopener noreferrer">
-      <span class="cup" aria-hidden="true">&#9749;</span> Buy me a coffee
+      <span class="cup" aria-hidden="true">&#9749;</span> <span data-i18n="coffee">Buy me a coffee</span>
     </a>
   </div>
 
   <!-- The privacy link is ABSOLUTE on purpose. Capacitor copies app-en/ to the
        web root, so a relative "../privacy.html" would escape it and 404 inside
        the packaged app. This URL is also the one declared to the Play Console. -->
-  <footer>Takeoff &amp; Landing Perf &middot; no built-in aircraft or aerodrome data &middot; every figure is the one you entered &middot;
-    <a href="https://perf-avions-3skt.vercel.app/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--cream-dim);">Privacy policy</a></footer>
+  <footer><span data-i18n="footer">Takeoff &amp; Landing Perf &middot; no built-in aircraft or aerodrome data &middot; every figure is the one you entered &middot;</span>
+    <a href="https://perf-avions-3skt.vercel.app/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--cream-dim);" data-i18n="footer.privacy">Privacy policy</a></footer>
 
 </div>
 
@@ -628,6 +649,238 @@
    worst case, the silhouettes and the hangar quote are absent. */
 const ASSETS_OK = !!(window.APP_ASSETS && window.APP_ASSETS.icons);
 const ICONS = ASSETS_OK ? window.APP_ASSETS.icons : {};
+
+/* This edition carries a single silhouette. The picker that used to choose one
+   of the four is gone: it decorated the card headers and the runway diagram and
+   never touched a computation, so a fixed generic profile costs nothing. */
+const ICON_KEY = 'lowwing';
+
+/* ============================================================================
+   i18n — French / English
+   ============================================================================
+   Two mechanisms, and they cover different things:
+
+     - Static markup carries data-i18n (text), data-i18n-html (markup allowed)
+       or data-i18n-ph (placeholder attribute). applyLang() rewrites them.
+     - Everything built by JS calls t('key') at RENDER time, never at load time,
+       so recompute() naturally re-renders in the current language.
+
+   One rule about markup: a translatable label must never hold a bare text node
+   next to its .unit-hint span. Setting textContent on the label would delete the
+   span, and refreshUnitLabels() would then have nothing left to fill. The text
+   always lives in its own <span data-i18n>, the unit hint is a sibling.
+
+   What is deliberately NOT translated: the instrument placards (ALT · FEET,
+   FIELD, DA, PA, ISA, HEAD/TAIL/XW). A French pilot's altimeter is lettered in
+   English too — translating those would make the instruments less familiar, not
+   more. The prose inside the SVGs (margin, slope, calm) is translated. */
+const STRINGS = {
+  en: {
+    'html.lang':'en', 'locale':'en-US',
+    'app.title':'Takeoff &amp; Landing Perf',
+    'doc.title':'Takeoff & Landing Perf',
+    'aria.lang':'Language', 'aria.units':'Units',
+    'units.metric':'Metric', 'units.imperial':'Imperial',
+
+    'accept.title':'Before you use this app',
+    'accept.p1':'This tool assists flight preparation and does not replace the aircraft flight manual. The pilot in command remains solely responsible.',
+    'accept.p2':'It contains no aircraft or aerodrome data of its own: every figure it uses is one you enter, taken from your own flight manual and your own aerodrome chart. Its corrections for altitude, temperature, wind and slope are approximations, described in full under “Method and assumptions”.',
+    'accept.btn':'I understand — continue',
+
+    'update.text':'<strong>A new version is available.</strong> Reload to apply it.',
+    'update.btn':'Reload',
+
+    'ac.head':'Aircraft — from your flight manual',
+    'ac.name':'Aircraft (optional)', 'ac.name.ph':'e.g. C172S / F-GXYZ',
+    'ac.note':'Fill in only the manoeuvre you need. Takeoff and landing are worked out independently of each other.',
+    'takeoff':'Takeoff', 'landing':'Landing', 'optional':'Optional',
+    'roll':'Ground roll', 'dist15':'Over 15 m / 50 ft obstacle',
+    'ph.300':'e.g. 300', 'ph.500':'e.g. 500', 'ph.200':'e.g. 200', 'ph.400':'e.g. 400',
+    'ph.optional':'optional',
+    'ac.mtow':'Max takeoff weight', 'ac.xwind':'Max demonstrated crosswind',
+    'ac.grass':'Grass penalty', 'ac.grass.u':'(%, applied on grass runways)',
+    'ac.refwarn.title':'⚠ Reference conditions assumed',
+    'ac.refwarn.a':'Figures are assumed to be sea level,',
+    'ac.refwarn.b':', no wind. If your manual’s table is referenced to other conditions, this app will underestimate your distances.',
+
+    'rw.head':'Runway — from your aerodrome chart',
+    'rw.name':'Aerodrome / runway (optional)', 'rw.name.ph':'e.g. EGKA RWY 25',
+    'rw.elev':'Field elevation', 'rw.surface':'Actual runway surface',
+    'surface.paved':'Paved', 'surface.grass':'Grass / unpaved',
+    'rw.qfu':'Runway direction', 'rw.toda':'Takeoff distance available',
+    'rw.lda':'Landing distance available', 'rw.slope':'Slope',
+    'u.mag':'(° magnetic)', 'u.slope':'(%, uphill positive)', 'u.factor':'(factor ×)',
+
+    'wx.head':'Weather &amp; margin',
+    'wx.metar':'METAR — ICAO code', 'wx.metar.ph':'EGKA',
+    'wx.fetch':'Fetch METAR', 'wx.copy':'Copy to calculation',
+    'wx.temp':'Temperature', 'wx.qnh':'QNH', 'wx.windDir':'Wind direction',
+    'wx.windSpeed':'Wind speed', 'wx.margin':'Safety margin',
+    'inst.alt':'Altimeter — field / density',
+
+    'm.dist15':'Over 15 m / 50 ft', 'm.margin':'With margin', 'm.avail':'Available',
+    'method.title':'Method and assumptions',
+    'disclaimer':'<strong>Warning.</strong> This tool assists flight preparation. Its altitude, temperature, wind and slope corrections are approximations applied to figures you supply, not certified performance data. It does not replace your aircraft’s official Flight Manual, the actual weather of the day, or the judgement of the pilot in command. Always check your real margins before every takeoff and landing.',
+    'coffee':'Buy me a coffee',
+    'footer':'Takeoff & Landing Perf · no built-in aircraft or aerodrome data · every figure is the one you entered ·',
+    'footer.privacy':'Privacy policy',
+
+    /* Dynamic */
+    'st.bad':'Insufficient — computed distance exceeds the runway',
+    'st.warn':'Marginal — safety margin not covered',
+    'st.ok':'OK — safety margin covered',
+    'idle.to':'Enter your takeoff figures above',
+    'idle.toda':'Enter the takeoff distance available (TODA)',
+    'idle.ld':'Enter your landing figures above',
+    'idle.lda':'Enter the landing distance available (LDA)',
+    'note.shorter':'The 15 m / 50 ft distance you entered is shorter than the ground roll, which is not physically possible. Check both figures.',
+    'wind.label':'Wind — runway ', 'wind.calm':'calm',
+    'xw.over':'⚠ Crosswind beyond the max demonstrated (', 'xw.max':'Max demonstrated crosswind: ',
+    'svg.margin':'margin', 'svg.beyond':' beyond the runway',
+    'svg.slope':'average slope ', 'svg.uphill':'uphill', 'svg.downhill':'downhill',
+    'hint.slope.a':'Slope ', 'hint.slope.up':' uphill in the direction of runway ',
+    'hint.slope.down':' downhill in the direction of runway ',
+    'hint.slope.b':'. Enter the opposite sign for the reciprocal, runway ',
+    'ref.a':'Reference assumed: sea level, ', 'ref.b':', no wind',
+    'ref.yours':'your figures',
+    'quote.open':'Hangar wisdom — “', 'quote.close':'”',
+
+    'metar.badicao':'Invalid ICAO code: four letters expected (e.g. EGKA).',
+    'metar.offline':'Offline: fetching a METAR needs an internet connection. Enter wind, temperature and QNH by hand.',
+    'metar.fetching':'Fetching…',
+    'metar.none.a':'No METAR retrieved for ', 'metar.none.b':' (unknown station, no connection, or services unavailable).',
+    'metar.observed.a':'Observed on the ', 'metar.observed.b':' at ', 'metar.observed.c':' UTC',
+    'metar.ago':' ago',
+    'metar.wind':'Wind ', 'metar.windvrb':'Wind variable / ', 'metar.gust':' (gusting ',
+    'metar.temp':'Temperature ', 'metar.qnh':'QNH ',
+    'metar.nodata':'No usable data could be extracted from this METAR.',
+    'metar.old.a':'⚠ METAR retrieved (source: ', 'metar.old.b':') but the observation is ',
+    'metar.old.c':' old — confirm conditions before flight.',
+    'metar.ok.a':'METAR retrieved (source: ', 'metar.ok.b':').',
+    'metar.err':'Could not retrieve the METAR (no internet connection or service unavailable).',
+    'metar.gustnote.a':'Gusts of ', 'metar.gustnote.b':' kt were not copied automatically — account for them yourself.',
+    'metar.vrbnote':'Variable wind (VRB): direction not copied, enter it by hand.',
+    'metar.copied':'Values copied to the calculation.',
+    'age.min':' min', 'age.h':' h'
+  },
+  fr: {
+    'html.lang':'fr', 'locale':'fr-FR',
+    'app.title':'Perfos décollage &amp; atterrissage',
+    'doc.title':'Perfos décollage & atterrissage',
+    'aria.lang':'Langue', 'aria.units':'Unités',
+    'units.metric':'Métrique', 'units.imperial':'Impérial',
+
+    'accept.title':'Avant d’utiliser cette application',
+    'accept.p1':'Cet outil aide à la préparation du vol et ne remplace pas le manuel de vol de l’avion. Le commandant de bord reste seul responsable.',
+    'accept.p2':'Elle ne contient aucune donnée avion ni aucune donnée d’aérodrome : chaque chiffre utilisé est celui que vous saisissez, relevé dans votre propre manuel de vol et sur votre propre carte d’aérodrome. Ses corrections d’altitude, de température, de vent et de pente sont des approximations, détaillées dans « Méthode et hypothèses ».',
+    'accept.btn':'J’ai compris — continuer',
+
+    'update.text':'<strong>Une nouvelle version est disponible.</strong> Rechargez pour l’appliquer.',
+    'update.btn':'Recharger',
+
+    'ac.head':'Avion — d’après votre manuel de vol',
+    'ac.name':'Avion (facultatif)', 'ac.name.ph':'ex. C172S / F-GXYZ',
+    'ac.note':'Ne remplissez que la manœuvre dont vous avez besoin. Le décollage et l’atterrissage sont calculés indépendamment l’un de l’autre.',
+    'takeoff':'Décollage', 'landing':'Atterrissage', 'optional':'Facultatif',
+    'roll':'Roulement au sol', 'dist15':'Distance pour franchir 15 m / 50 ft',
+    'ph.300':'ex. 300', 'ph.500':'ex. 500', 'ph.200':'ex. 200', 'ph.400':'ex. 400',
+    'ph.optional':'facultatif',
+    'ac.mtow':'Masse maxi au décollage', 'ac.xwind':'Traversier maxi démontré',
+    'ac.grass':'Majoration herbe', 'ac.grass.u':'(%, appliquée sur piste en herbe)',
+    'ac.refwarn.title':'⚠ Conditions de référence supposées',
+    'ac.refwarn.a':'Vos chiffres sont supposés relevés au niveau de la mer,',
+    'ac.refwarn.b':', sans vent. Si la table de votre manuel est référencée à d’autres conditions, cette application sous-estimera vos distances.',
+
+    'rw.head':'Piste — d’après votre carte d’aérodrome',
+    'rw.name':'Aérodrome / piste (facultatif)', 'rw.name.ph':'ex. LFSH RWY 03',
+    'rw.elev':'Altitude terrain', 'rw.surface':'Surface réelle de la piste',
+    'surface.paved':'Revêtue', 'surface.grass':'Herbe / non revêtue',
+    'rw.qfu':'Orientation de la piste', 'rw.toda':'Distance de décollage utilisable',
+    'rw.lda':'Distance d’atterrissage utilisable', 'rw.slope':'Pente',
+    'u.mag':'(° magnétique)', 'u.slope':'(%, montante positive)', 'u.factor':'(facteur ×)',
+
+    'wx.head':'Météo &amp; marge',
+    'wx.metar':'METAR — code OACI', 'wx.metar.ph':'LFST',
+    'wx.fetch':'Récupérer le METAR', 'wx.copy':'Copier dans le calcul',
+    'wx.temp':'Température', 'wx.qnh':'QNH', 'wx.windDir':'Direction du vent',
+    'wx.windSpeed':'Vitesse du vent', 'wx.margin':'Marge de sécurité',
+    'inst.alt':'Altimètre — terrain / densité',
+
+    'm.dist15':'Franchissement 15 m / 50 ft', 'm.margin':'Avec marge', 'm.avail':'Disponible',
+    'method.title':'Méthode et hypothèses',
+    'disclaimer':'<strong>Avertissement.</strong> Cet outil aide à la préparation du vol. Ses corrections d’altitude, de température, de vent et de pente sont des approximations appliquées à des chiffres que vous fournissez, et non des performances certifiées. Il ne remplace ni le manuel de vol officiel de votre avion, ni la météo réelle du jour, ni le jugement du commandant de bord. Vérifiez toujours vos marges réelles avant chaque décollage et chaque atterrissage.',
+    'coffee':'Offrez-moi un café',
+    'footer':'Perfos décollage & atterrissage · aucune base avion ni aérodrome · chaque chiffre est celui que vous avez saisi ·',
+    'footer.privacy':'Politique de confidentialité',
+
+    /* Dynamique */
+    'st.bad':'Insuffisant — la distance calculée dépasse la piste',
+    'st.warn':'Limite — marge de sécurité non couverte',
+    'st.ok':'OK — marge de sécurité couverte',
+    'idle.to':'Saisissez vos chiffres de décollage ci-dessus',
+    'idle.toda':'Saisissez la distance de décollage utilisable (TODA)',
+    'idle.ld':'Saisissez vos chiffres d’atterrissage ci-dessus',
+    'idle.lda':'Saisissez la distance d’atterrissage utilisable (LDA)',
+    'note.shorter':'La distance de franchissement des 15 m / 50 ft que vous avez saisie est plus courte que le roulement au sol, ce qui est physiquement impossible. Vérifiez les deux chiffres.',
+    'wind.label':'Vent — piste ', 'wind.calm':'calme',
+    'xw.over':'⚠ Traversier au-delà du maxi démontré (', 'xw.max':'Traversier maxi démontré : ',
+    'svg.margin':'marge', 'svg.beyond':' au-delà de la piste',
+    'svg.slope':'pente moyenne ', 'svg.uphill':'montante', 'svg.downhill':'descendante',
+    'hint.slope.a':'Pente ', 'hint.slope.up':' montante dans le sens de la piste ',
+    'hint.slope.down':' descendante dans le sens de la piste ',
+    'hint.slope.b':'. Saisissez le signe opposé pour la piste inverse, piste ',
+    'ref.a':'Référence supposée : niveau de la mer, ', 'ref.b':', sans vent',
+    'ref.yours':'vos chiffres',
+    'quote.open':'Sagesse de hangar — « ', 'quote.close':' »',
+
+    'metar.badicao':'Code OACI invalide : quatre lettres attendues (ex. LFST).',
+    'metar.offline':'Hors ligne : récupérer un METAR nécessite une connexion Internet. Saisissez le vent, la température et le QNH à la main.',
+    'metar.fetching':'Récupération…',
+    'metar.none.a':'Aucun METAR récupéré pour ', 'metar.none.b':' (station inconnue, pas de connexion, ou services indisponibles).',
+    'metar.observed.a':'Observé le ', 'metar.observed.b':' à ', 'metar.observed.c':' UTC',
+    'metar.ago':'',
+    'metar.wind':'Vent ', 'metar.windvrb':'Vent variable / ', 'metar.gust':' (rafales ',
+    'metar.temp':'Température ', 'metar.qnh':'QNH ',
+    'metar.nodata':'Aucune donnée exploitable n’a pu être extraite de ce METAR.',
+    'metar.old.a':'⚠ METAR récupéré (source : ', 'metar.old.b':') mais l’observation date de ',
+    'metar.old.c':' — confirmez les conditions avant le vol.',
+    'metar.ok.a':'METAR récupéré (source : ', 'metar.ok.b':').',
+    'metar.err':'Impossible de récupérer le METAR (pas de connexion Internet ou service indisponible).',
+    'metar.gustnote.a':'Les rafales de ', 'metar.gustnote.b':' kt n’ont pas été copiées automatiquement — tenez-en compte vous-même.',
+    'metar.vrbnote':'Vent variable (VRB) : direction non copiée, saisissez-la à la main.',
+    'metar.copied':'Valeurs copiées dans le calcul.',
+    'age.min':' min', 'age.h':' h'
+  }
+};
+
+/* French by default when the browser is French and nothing has been stored yet:
+   the acceptance overlay covers the header on the very first run, so a user who
+   cannot read the app also cannot reach the toggle without one. */
+let LANG = (navigator.language || 'en').toLowerCase().startsWith('fr') ? 'fr' : 'en';
+function t(key){ return (STRINGS[LANG] && STRINGS[LANG][key]) !== undefined ? STRINGS[LANG][key] : (STRINGS.en[key] || ''); }
+function locale(){ return t('locale'); }
+
+function applyLang(){
+  document.documentElement.lang = t('html.lang');
+  document.title = t('doc.title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.getElementById('langGroup').setAttribute('aria-label', t('aria.lang'));
+  document.getElementById('unitGroup').setAttribute('aria-label', t('aria.units'));
+  ['langFrBtn','langFrBtn2'].forEach(id => document.getElementById(id).classList.toggle('on', LANG === 'fr'));
+  ['langEnBtn','langEnBtn2'].forEach(id => document.getElementById(id).classList.toggle('on', LANG === 'en'));
+  refreshUnitLabels();   // data-i18n rewrote the labels; the unit hints live in sibling spans, but the reference temperature does not
+  renderQuote();
+  recompute();           // every JS-built string calls t() at render time
+}
+
+function setLang(next){
+  if (next !== 'fr' && next !== 'en') return;
+  LANG = next;
+  applyLang();
+  saveSettings();
+}
 
 /* ---------- Units ----------
    The whole program computes in METRES, hPa, °C, feet and knots. Units are
@@ -783,9 +1036,9 @@ function metarAgeMinutes(obsTime){
 }
 
 function formatAge(minutes){
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 60) return `${minutes}${t('age.min')}`;
   const h = Math.floor(minutes / 60), m = minutes % 60;
-  return m ? `${h} h ${m.toString().padStart(2,'0')} min` : `${h} h`;
+  return m ? `${h}${t('age.h')} ${m.toString().padStart(2,'0')}${t('age.min')}` : `${h}${t('age.h')}`;
 }
 
 async function fetchMetar(){
@@ -798,20 +1051,20 @@ async function fetchMetar(){
   lastMetar = null;
 
   if (!/^[A-Z]{4}$/.test(icao)){
-    setMetarStatus('Invalid ICAO code: four letters expected (e.g. EGKA).', 'error');
+    setMetarStatus(t('metar.badicao'), 'error');
     return;
   }
 
   // Everything else in this app works offline; the METAR cannot. An explicit
   // message beats two fetches doomed to fail.
   if (!navigator.onLine){
-    setMetarStatus('Offline: fetching a METAR needs an internet connection. Enter wind, temperature and QNH by hand.', 'error');
+    setMetarStatus(t('metar.offline'), 'error');
     return;
   }
 
   const btn = document.getElementById('metarFetchBtn');
   btn.disabled = true;
-  setMetarStatus('Fetching…', '');
+  setMetarStatus(t('metar.fetching'), '');
 
   try {
     let text = null, sourceName = null;
@@ -826,7 +1079,7 @@ async function fetchMetar(){
       }
     }
     if (!text){
-      setMetarStatus(`No METAR retrieved for ${icao} (unknown station, no connection, or services unavailable).`, 'error');
+      setMetarStatus(t('metar.none.a') + icao + t('metar.none.b'), 'error');
       return;
     }
     const parsed = parseMetar(text);
@@ -838,24 +1091,27 @@ async function fetchMetar(){
 
     const ageMin = metarAgeMinutes(parsed.obsTime);
     const parts = [];
-    if (parsed.obsTime) parts.push(`Observed on the ${parsed.obsTime.day} at ${parsed.obsTime.hour}:${parsed.obsTime.min} UTC${ageMin !== null && ageMin >= 0 ? ' (' + formatAge(ageMin) + ' ago)' : ''}`);
+    if (parsed.obsTime) parts.push(t('metar.observed.a') + parsed.obsTime.day + t('metar.observed.b') +
+      `${parsed.obsTime.hour}:${parsed.obsTime.min}` + t('metar.observed.c') +
+      (ageMin !== null && ageMin >= 0 ? ' (' + formatAge(ageMin) + t('metar.ago') + ')' : ''));
     if (parsed.windDir !== null){
+      const gust = parsed.gustKt ? t('metar.gust') + parsed.gustKt + ' kt)' : '';
       parts.push(parsed.windDir === 'VRB'
-        ? `Wind variable / ${parsed.windSpeedKt} kt${parsed.gustKt ? ' (gusting ' + parsed.gustKt + ' kt)' : ''}`
-        : `Wind ${parsed.windDir}°/${parsed.windSpeedKt} kt${parsed.gustKt ? ' (gusting ' + parsed.gustKt + ' kt)' : ''}`);
+        ? t('metar.windvrb') + `${parsed.windSpeedKt} kt` + gust
+        : t('metar.wind') + `${parsed.windDir}°/${parsed.windSpeedKt} kt` + gust);
     }
-    if (parsed.tempC !== null) parts.push(`Temperature ${parsed.tempC} °C`);
-    if (parsed.qnhHpa !== null) parts.push(`QNH ${parsed.qnhHpa} hPa`);
-    document.getElementById('metarSummary').textContent = parts.join(' · ') || 'No usable data could be extracted from this METAR.';
+    if (parsed.tempC !== null) parts.push(t('metar.temp') + `${parsed.tempC} °C`);
+    if (parsed.qnhHpa !== null) parts.push(t('metar.qnh') + `${parsed.qnhHpa} hPa`);
+    document.getElementById('metarSummary').textContent = parts.join(' · ') || t('metar.nodata');
 
     document.getElementById('metarCopyBtn').disabled = false;
     if (ageMin !== null && ageMin > 60){
-      setMetarStatus(`⚠ METAR retrieved (source: ${sourceName}) but the observation is ${formatAge(ageMin)} old — confirm conditions before flight.`, 'warn');
+      setMetarStatus(t('metar.old.a') + sourceName + t('metar.old.b') + formatAge(ageMin) + t('metar.old.c'), 'warn');
     } else {
-      setMetarStatus(`METAR retrieved (source: ${sourceName}).`, 'ok');
+      setMetarStatus(t('metar.ok.a') + sourceName + t('metar.ok.b'), 'ok');
     }
   } catch (err) {
-    setMetarStatus('Could not retrieve the METAR (no internet connection or service unavailable).', 'error');
+    setMetarStatus(t('metar.err'), 'error');
   } finally {
     btn.disabled = false;
   }
@@ -873,16 +1129,16 @@ function copyMetarToForm(){
 
   if (lastMetar.windSpeedKt !== null){
     document.getElementById('windSpeed').value = lastMetar.windSpeedKt;
-    if (lastMetar.gustKt) notes.push(`Gusts of ${lastMetar.gustKt} kt were not copied automatically — account for them yourself.`);
+    if (lastMetar.gustKt) notes.push(t('metar.gustnote.a') + lastMetar.gustKt + t('metar.gustnote.b'));
   }
   if (lastMetar.windDir === 'VRB'){
-    notes.push('Variable wind (VRB): direction not copied, enter it by hand.');
+    notes.push(t('metar.vrbnote'));
   } else if (lastMetar.windDir !== null){
     document.getElementById('windDir').value = lastMetar.windDir;
   }
 
   recompute();
-  setMetarStatus(notes.length ? notes.join(' ') : 'Values copied to the calculation.', notes.length ? 'warn' : 'ok');
+  setMetarStatus(notes.length ? notes.join(' ') : t('metar.copied'), notes.length ? 'warn' : 'ok');
 }
 
 /* ---------- Physics / correction model ----------
@@ -944,10 +1200,10 @@ function slopeFactor(kind, slopePct){
 
 /* Number formatting. Distances are formatted in the CURRENT display unit, so
    every fmtDist() call must receive a value already converted. */
-function fmt(n){ const r = Math.round(n) || 0; return r.toLocaleString('en-US'); }
+function fmt(n){ const r = Math.round(n) || 0; return r.toLocaleString(locale()); }
 function distUnit(){ return UNITS === 'imperial' ? 'ft' : 'm'; }
 function fmtDist(internalMetres){ return fmt(distToDisplay(internalMetres)) + ' ' + distUnit(); }
-function fmtSlope(pct){ return Math.abs(pct).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'; }
+function fmtSlope(pct){ return Math.abs(pct).toLocaleString(locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'; }
 
 /* ---------- Runway SVG (realistic top-down look) ----------
    Distances arrive already converted to the display unit: the bar positions are
@@ -1002,18 +1258,18 @@ function buildRunwaySvg(runwayLen, distRaw, distMargin, surface, numLeft, numRig
     // where the SVG clips it. Past that point, hang the label on the other side.
     const tight = xMargin > rx1 - 70;
     const lx = tight ? xMargin - 6 : xMargin + 6;
-    svg += `<text x="${lx}" y="${ry0-12}" font-size="18" font-weight="700" fill="#0d2440"${tight ? ' text-anchor="end"' : ''}>margin</text>`;
+    svg += `<text x="${lx}" y="${ry0-12}" font-size="18" font-weight="700" fill="#0d2440"${tight ? ' text-anchor="end"' : ''}>${t('svg.margin')}</text>`;
   } else {
     svg += `<rect x="${rx1}" y="${ry0}" width="16" height="${ry1-ry0}" fill="url(#hatch)"/>`;
     // Below the runway, not above: above-right is where numRight already is, and
     // the two overlapped since both are end-anchored on rx1.
-    svg += `<text x="${rx1-4}" y="${ry1+24}" font-size="18" font-weight="700" fill="#b91c1c" text-anchor="end">+${fmt(distMargin-runwayLen)} ${unit} beyond the runway</text>`;
+    svg += `<text x="${rx1-4}" y="${ry1+24}" font-size="18" font-weight="700" fill="#b91c1c" text-anchor="end">+${fmt(distMargin-runwayLen)} ${unit}${t('svg.beyond')}</text>`;
   }
   svg += `<defs><pattern id="hatch" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="4" height="8" fill="#b91c1c"/></pattern></defs>`;
   // Slope caption, bottom left: that area is free, neither the "beyond the
   // runway" text (right) nor the "margin" label (top) reaches it.
   if (slopePct){
-    svg += `<text x="${rx0+60}" y="${H-6}" font-size="22" font-weight="700" fill="#b45309">${slopePct < 0 ? '↘' : '↗'} average slope ${fmtSlope(slopePct)} ${slopePct < 0 ? 'downhill' : 'uphill'}</text>`;
+    svg += `<text x="${rx0+60}" y="${H-6}" font-size="22" font-weight="700" fill="#b45309">${slopePct < 0 ? '↘' : '↗'} ${t('svg.slope')}${fmtSlope(slopePct)} ${slopePct < 0 ? t('svg.downhill') : t('svg.uphill')}</text>`;
   }
   svg += `</svg>`;
   return svg;
@@ -1067,7 +1323,7 @@ function buildWindRoseSvg(qfu, windDir, windSpeed, wind, maxX){
     `<text x="${x + 46}" y="222" font-size="12.5" font-weight="700" fill="${col}" text-anchor="middle">${txt}</text>`;
   const caption = windSpeed > 0
     ? `${String(Math.round(windDir)).padStart(3, '0')}° / ${fmt(windSpeed)} kt`
-    : 'calm';
+    : t('wind.calm');
   return `<svg viewBox="0 0 200 252" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Consolas, monospace">` +
     `<circle cx="${C}" cy="${C}" r="96" fill="#101317" stroke="#000" stroke-width="2"/>` +
     `<circle cx="${C}" cy="${C}" r="${R}" fill="#0b0d10" stroke="#3a3e46" stroke-width="1.5"/>` +
@@ -1133,75 +1389,6 @@ function buildAltimeterSvg(elevFt, daFt, paFt, isaDev){
     `</svg>`;
 }
 
-/* ---------- Aeronautical day / night watch ----------
-   24 h aviator dial: midnight at the bottom, noon at the top, one tick per hour.
-   The green arc covers the aeronautical day (sunrise − 30 min → sunset + 30 min),
-   the amber hand shows the current time. Shown only when coordinates are given. */
-function buildNightClockSvg(day, night, now){
-  const C = 100, R = 88;
-  const ang = d => (d.getHours() + d.getMinutes() / 60) / 24 * 360 + 180;
-  const pt = (a, r) => {
-    const rad = (a - 90) * Math.PI / 180;
-    return [(C + r * Math.cos(rad)).toFixed(1), (C + r * Math.sin(rad)).toFixed(1)];
-  };
-  let ticks = '';
-  for (let h = 0; h < 24; h++){
-    const major = h % 6 === 0;
-    const a = h / 24 * 360 + 180;
-    const [x1, y1] = pt(a, R - (major ? 12 : 6));
-    const [x2, y2] = pt(a, R);
-    ticks += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#ece5d3" stroke-width="${major ? 2 : 1}" opacity="${major ? .85 : .45}"/>`;
-  }
-  let nums = '';
-  [0, 6, 12, 18].forEach(h => {
-    const [x, y] = pt(h / 24 * 360 + 180, R - 24);
-    nums += `<text x="${x}" y="${y}" font-size="13" font-weight="700" fill="#a49e8f" text-anchor="middle" dominant-baseline="central">${String(h).padStart(2, '0')}</text>`;
-  });
-  // Day arc, swept clockwise from the start of day to the start of night
-  const a1 = ang(day), a2 = ang(night);
-  const delta = (a2 - a1 + 360) % 360;
-  const [ax1, ay1] = pt(a1, 72), [ax2, ay2] = pt(a2, 72);
-  const arc = `<path d="M ${ax1} ${ay1} A 72 72 0 ${delta > 180 ? 1 : 0} 1 ${ax2} ${ay2}" fill="none" stroke="#57e08c" stroke-width="7" stroke-linecap="round" opacity=".8"/>`;
-  // Current-time hand
-  const [hx, hy] = pt(ang(now), 62);
-  const hand = `<line x1="${C}" y1="${C}" x2="${hx}" y2="${hy}" stroke="#ffb84d" stroke-width="3.5" stroke-linecap="round"/>` +
-    `<circle cx="${C}" cy="${C}" r="5" fill="#31353c" stroke="#000"/>`;
-  const fmtT = d => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-  const lcd = (x, txt, col) =>
-    `<rect x="${x}" y="206" width="92" height="24" rx="4" fill="#03130a" stroke="#1c2320" stroke-width="2"/>` +
-    `<text x="${x + 46}" y="222" font-size="12.5" font-weight="700" fill="${col}" text-anchor="middle">${txt}</text>`;
-  return `<svg viewBox="0 0 200 252" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Consolas, monospace">` +
-    `<circle cx="${C}" cy="${C}" r="96" fill="#101317" stroke="#000" stroke-width="2"/>` +
-    `<circle cx="${C}" cy="${C}" r="${R}" fill="#0b0d10" stroke="#3a3e46" stroke-width="1.5"/>` +
-    ticks + nums + arc + hand +
-    lcd(4, `DAY ${fmtT(day)}`, '#57e08c') + lcd(104, `NIGHT ${fmtT(night)}`, '#ffb84d') +
-    `<text x="${C}" y="247" font-size="12" fill="#a49e8f" text-anchor="middle">now ${fmtT(now)}</text>` +
-    `</svg>`;
-}
-
-/* ---------- Sunrise and sunset ----------
-   Simplified NOAA algorithm: returns minutes UTC since 00:00 for sunrise and
-   sunset (zenith 90.833° = standard refraction + solar semi-diameter). Computed
-   entirely offline, ~1 min accuracy at mid latitudes. */
-function sunTimesUTC(date, lat, lon){
-  const rad = Math.PI / 180;
-  const doy = Math.floor((date.getTime() - Date.UTC(date.getUTCFullYear(), 0, 0)) / 86400000);
-  const gamma = 2 * Math.PI / 365 * (doy - 1 + 0.5);
-  const eqtime = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma)
-    - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
-  const decl = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma)
-    - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma)
-    - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
-  const cosHa = Math.cos(90.833 * rad) / (Math.cos(lat * rad) * Math.cos(decl))
-    - Math.tan(lat * rad) * Math.tan(decl);
-  if (cosHa < -1 || cosHa > 1) return null; // polar day or night: no sunrise/sunset today
-  const ha = Math.acos(cosHa) / rad;
-  return {
-    sunrise: 720 - 4 * (lon + ha) - eqtime,
-    sunset: 720 - 4 * (lon - ha) - eqtime
-  };
-}
-
 /* Nothing to compute yet (a required aircraft or runway figure is missing). */
 function renderIdle(prefix, msg){
   ['Roll','Dist','Margin','Avail'].forEach(k => document.getElementById(prefix + k).textContent = '–');
@@ -1213,9 +1400,9 @@ function renderIdle(prefix, msg){
 }
 
 function statusFor(distRaw, distMargin, runwayLen){
-  if (distRaw > runwayLen) return { cls: 'status-bad', text: 'Insufficient — computed distance exceeds the runway' };
-  if (distMargin > runwayLen) return { cls: 'status-warn', text: 'Marginal — safety margin not covered' };
-  return { cls: 'status-ok', text: 'OK — safety margin covered' };
+  if (distRaw > runwayLen) return { cls: 'status-bad', text: t('st.bad') };
+  if (distMargin > runwayLen) return { cls: 'status-warn', text: t('st.warn') };
+  return { cls: 'status-ok', text: t('st.ok') };
 }
 
 function runwayNumbersFromQFU(qfu){
@@ -1280,14 +1467,13 @@ function buildAircraftFromForm(){
   const ldRoll = distOrNull('acLdRoll'), ldDist = distOrNull('acLdDist');
   const usable = (roll, dist) => [roll, dist].every(v => v !== null && v > 0);
 
-  // Grass penalty: applied only when the pilot's figures are for pavement and the
-  // runway is grass. The reverse (grass figures on pavement) is conservative, so
-  // no factor is invented to shorten anything — see the surface warning.
-  const refSurface = document.getElementById('acSurfaceRef').value;
+  // Grass penalty: applied when the runway below is declared grass and the pilot
+  // has typed their own percentage. Nothing is invented — no penalty is applied
+  // unless that box holds a figure, and the figure is the pilot's own.
   const actualSurface = document.getElementById('rwSurface').value;
   const penaltyPct = numOrNull('acGrassPenalty');
   let k = 1;
-  if (refSurface === 'paved' && actualSurface === 'grass' && penaltyPct > 0){
+  if (actualSurface === 'grass' && penaltyPct > 0){
     k = 1 + penaltyPct / 100;
   }
 
@@ -1302,32 +1488,12 @@ function buildAircraftFromForm(){
     ref: { elevFt: 0, tempC: 15, headwindKt: 0 },
     mtow: mtow === null ? null : massToInternal(mtow),
     crosswindLimit: xwind !== null && xwind > 0 ? xwind : null,
-    icon: document.getElementById('acIcon').value,
+    icon: ICON_KEY,
     grassPenaltyApplied: k !== 1 ? penaltyPct : null
   };
   if (usable(toRoll, toDist)) ac.takeoff = both(toRoll, toDist);
   if (usable(ldRoll, ldDist)) ac.landing = both(ldRoll, ldDist);
   return ac;
-}
-
-/* Surface mismatch notice. Nothing is corrected silently: either the pilot enters
-   the figures for the right surface, or supplies their own penalty. */
-function renderSurfaceWarning(ac){
-  const el = document.getElementById('surfaceWarn');
-  const refSurface = document.getElementById('acSurfaceRef').value;
-  const actualSurface = document.getElementById('rwSurface').value;
-  if (refSurface === actualSurface){ el.className = 'caution hidden'; el.innerHTML = ''; return; }
-
-  let body;
-  if (refSurface === 'paved'){
-    body = ac && ac.grassPenaltyApplied
-      ? `Your figures are for a <strong>paved</strong> runway but this runway is <strong>grass</strong>. Your own grass penalty of <strong>+${fmtSlope(ac.grassPenaltyApplied)}</strong> is being applied to both the roll and the 15 m / 50 ft distance. No factor of the app's own invention is involved.`
-      : `Your figures are for a <strong>paved</strong> runway but this runway is <strong>grass</strong>, which lengthens both distances. This app invents no grass factor: enter the grass figures from your manual, or type your own penalty in the &ldquo;Grass penalty&rdquo; box above. Until you do, <strong>the results below are optimistic</strong>.`;
-  } else {
-    body = `Your figures are for a <strong>grass</strong> runway but this runway is <strong>paved</strong>. No factor is applied: grass figures used on pavement are conservative, so the results below are longer than reality rather than shorter.`;
-  }
-  el.className = 'caution';
-  el.innerHTML = '<span class="caution-title">&#9888; Surface mismatch</span>' + body;
 }
 
 function recompute(){
@@ -1347,17 +1513,14 @@ function recompute(){
   const toda = distOrNull('rwTODA');
   const lda = distOrNull('rwLDA');
   const slopePct = numOrNull('rwSlope') || 0;
-  const lat = numOrNull('rwLat');
-  const lon = numOrNull('rwLon');
 
   const rn = runwayNumbersFromQFU(qfu);
   const numLeft = rn.num, numRight = rn.recip;
 
   document.getElementById('slopeHint').textContent = slopePct
-    ? `Slope ${fmtSlope(slopePct)} ${slopePct > 0 ? 'uphill' : 'downhill'} in the direction of runway ${numLeft}. Enter the opposite sign for the reciprocal, runway ${numRight}.`
+    ? t('hint.slope.a') + fmtSlope(slopePct) + (slopePct > 0 ? t('hint.slope.up') : t('hint.slope.down')) +
+      numLeft + t('hint.slope.b') + numRight + '.'
     : '';
-
-  renderSurfaceWarning(ac);
 
   const wind = windComponents(windDir, windSpeed, qfu);
 
@@ -1367,57 +1530,36 @@ function recompute(){
   const isaDev = temp - isaTemp(paFt);
 
   const maxX = ac ? ac.crosswindLimit : null;
-  document.getElementById('windRoseLabel').textContent = 'Wind — runway ' + numLeft;
+  document.getElementById('windRoseLabel').textContent = t('wind.label') + numLeft;
   document.getElementById('windRose').innerHTML = buildWindRoseSvg(qfu, windDir, windSpeed, wind, maxX);
   const xWarnEl = document.getElementById('windCrossWarn');
   if (maxX && wind.crosswind > maxX){
     xWarnEl.className = 'tile-sub warn';
-    xWarnEl.textContent = `⚠ Crosswind beyond the max demonstrated (${maxX} kt)`;
+    xWarnEl.textContent = t('xw.over') + `${maxX} kt)`;
   } else {
     xWarnEl.className = 'tile-sub';
-    xWarnEl.textContent = maxX ? `Max demonstrated crosswind: ${maxX} kt` : '';
+    xWarnEl.textContent = maxX ? t('xw.max') + `${maxX} kt` : '';
   }
 
   document.getElementById('altimeter').innerHTML = buildAltimeterSvg(elevFt, daFt, paFt, isaDev);
 
-  // Aeronautical day and night, from the coordinates the pilot typed. Hidden
-  // when they are empty: there is no database to fall back on in this edition.
-  const nightTile = document.getElementById('nightTile');
-  const sun = (lat !== null && lon !== null) ? sunTimesUTC(new Date(), lat, lon) : null;
-  if (sun){
-    const now = new Date();
-    const mkT = min => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, Math.round(min * 60)));
-    const fmtT = d => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-    const sunrise = mkT(sun.sunrise), sunset = mkT(sun.sunset);
-    const day = new Date(sunrise.getTime() - 30 * 60000);
-    const night = new Date(sunset.getTime() + 30 * 60000);
-    nightTile.style.display = '';
-    document.getElementById('nightLabel').textContent = 'Aeronautical day / night';
-    document.getElementById('nightClock').innerHTML = buildNightClockSvg(day, night, now);
-    document.getElementById('nightSub').textContent =
-      `Sunrise ${fmtT(sunrise)} − 30 min · sunset ${fmtT(sunset)} + 30 min · today, device local time. Check your national definition of night.`;
-  } else {
-    nightTile.style.display = 'none';
-  }
-
   // Reference captions
-  const acLabel = ac && ac.name ? ac.name : 'your figures';
+  const acLabel = ac && ac.name ? ac.name : t('ref.yours');
   const weightTxt = ac && ac.mtow ? ` · ${fmt(massToDisplay(ac.mtow))} ${UNITS === 'imperial' ? 'lb' : 'kg'}` : '';
-  const refTxt = `Reference assumed: sea level, ${refTempTxt()}, no wind${weightTxt} · ${acLabel}`;
+  const refTxt = t('ref.a') + refTempTxt() + t('ref.b') + weightTxt + ' · ' + acLabel;
   document.getElementById('toRef').textContent = refTxt;
   document.getElementById('ldRef').textContent = refTxt;
-  const iconKey = document.getElementById('acIcon').value;
-  document.getElementById('toIcon').innerHTML = ICONS[iconKey] || '';
-  document.getElementById('ldIcon').innerHTML = ICONS[iconKey] || '';
+  document.getElementById('toIcon').innerHTML = ICONS[ICON_KEY] || '';
+  document.getElementById('ldIcon').innerHTML = ICONS[ICON_KEY] || '';
 
   renderMethod(ac);
 
   // Each card lives its own life: a missing landing figure never blanks the
   // takeoff card, and vice versa.
   renderSide('to', 'takeoff', ac, toda, elevFt, qnh, temp, wind, surface, slopePct, margin, numLeft, numRight,
-    'Enter your takeoff figures above', 'Enter the takeoff distance available (TODA)');
+    t('idle.to'), t('idle.toda'));
   renderSide('ld', 'landing', ac, lda, elevFt, qnh, temp, wind, surface, slopePct, margin, numLeft, numRight,
-    'Enter your landing figures above', 'Enter the landing distance available (LDA)');
+    t('idle.ld'), t('idle.lda'));
 
   saveSettings();
 }
@@ -1449,7 +1591,7 @@ function renderSide(prefix, kind, ac, avail, elevFt, qnh, temp, wind, surface, s
 
   const notes = [];
   if (res.dist15 < res.roll * 0.999){
-    notes.push('The 15 m / 50 ft distance you entered is shorter than the ground roll, which is not physically possible. Check both figures.');
+    notes.push(t('note.shorter'));
   }
   document.getElementById(prefix + 'Note').innerHTML =
     notes.map(n => `<div class="aircraft-note">${n}</div>`).join('');
@@ -1464,17 +1606,50 @@ function renderMethod(ac){
     `<tr><td>${label}</td><td>${roll === null ? '—' : fmt(distToDisplay(roll)) + ' ' + dU}</td><td>${dist === null ? '—' : fmt(distToDisplay(dist)) + ' ' + dU}</td></tr>`;
   // Only the manoeuvres actually filled in are listed: the two are independent.
   const rows = [];
-  if (ac.takeoff) rows.push(row('Takeoff', ac.takeoff.paved.roll, ac.takeoff.paved.dist15));
-  if (ac.landing) rows.push(row('Landing', ac.landing.paved.roll, ac.landing.paved.dist15));
+  if (ac.takeoff) rows.push(row(t('takeoff'), ac.takeoff.paved.roll, ac.takeoff.paved.dist15));
+  if (ac.landing) rows.push(row(t('landing'), ac.landing.paved.roll, ac.landing.paved.dist15));
+  const FR = LANG === 'fr';
   const table = rows.length
     ? `<table>
-        <tr><th></th><th>Ground roll</th><th>Over 15 m / 50 ft</th></tr>
+        <tr><th></th><th>${t('roll')}</th><th>${t('m.dist15')}</th></tr>
         ${rows.join('')}
       </table>
-      ${ac.grassPenaltyApplied ? `<p>These include your grass penalty of +${fmtSlope(ac.grassPenaltyApplied)}.</p>` : ''}`
-    : '<p><em>No figures entered yet.</em></p>';
+      ${ac.grassPenaltyApplied ? `<p>${FR ? 'Ces chiffres incluent votre majoration herbe de +' : 'These include your grass penalty of +'}${fmtSlope(ac.grassPenaltyApplied)}.</p>` : ''}`
+    : `<p><em>${FR ? 'Aucun chiffre saisi pour l’instant.' : 'No figures entered yet.'}</em></p>`;
 
-  document.getElementById('methodContent').innerHTML = `
+  document.getElementById('methodContent').innerHTML = FR ? `
+    <p><strong>Cette application ne contient aucune donnée avion ni aucune donnée d’aérodrome.</strong> Chaque nombre ci-dessous est un nombre que vous avez saisi, relevé dans votre propre manuel de vol et sur votre propre carte d’aérodrome. Rien n’est recherché, rien n’est republié, et rien n’est vérifié à votre place.</p>
+
+    <p><strong>Vos chiffres de référence</strong> (tels que saisis, dans les unités courantes) :</p>
+    ${table}
+
+    <p><strong>&#9888; Conditions de référence &mdash; à lire avant de faire confiance à quoi que ce soit ci-dessous.</strong> Vos chiffres sont supposés avoir été relevés <strong>au niveau de la mer, à ${refTempTxt()}, sans vent</strong>. Cette hypothèse n’est pas vérifiée et ne peut pas l’être : une fiche minimale n’a pas la place d’accueillir les conditions auxquelles la table de chaque manuel est ancrée. Si la table de votre manuel est référencée à d’autres conditions &mdash; une altitude-pression de 2 000 ft, une colonne « jour chaud », un vent de face annoncé &mdash; <strong>cette application sous-estimera vos distances</strong>, ce qui est le sens dangereux de l’erreur. Quand votre manuel donne une ligne au niveau de la mer, à ${refTempTxt()}, sans vent, utilisez celle-là.</p>
+
+    <p><strong>Facteurs de correction.</strong> Un seul modèle multiplicatif générique est appliqué aux chiffres que vous saisissez, car l’application n’a aucun moyen de connaître les abaques réelles de votre avion. Ces facteurs proviennent d’un manuel de vol d’avion léger et sont typiques de la catégorie ; ce ne sont <em>pas</em> les corrections certifiées de votre avion :</p>
+    <table>
+      <tr><th>Facteur</th><th>Effet</th></tr>
+      <tr><td>+1 000 ft d’altitude-pression</td><td>× 1,10</td></tr>
+      <tr><td>+10 °C au-dessus de la température standard à cette altitude</td><td>× 1,10</td></tr>
+      <tr><td>Vent de face</td><td>× 0,90 par 10 kt</td></tr>
+      <tr><td>Vent arrière</td><td>× 1,10 par 2 kt</td></tr>
+    </table>
+
+    <p><strong>Correction de pente.</strong> Le roulement au sol vaut V² / 2a, où a est l’accélération au décollage ou la décélération au freinage. Sur une pente, la gravité ajoute une composante g × pente ≈ 0,1 × pente (pente en %), d’où un coefficient de 1,5 / (1,5 − 0,1 × pente) au décollage et 1,5 / (1,5 + 0,1 × pente) à l’atterrissage, la pente étant comptée positive lorsqu’elle monte dans le sens de la manœuvre.</p>
+
+    <p><strong>Limites de cette correction</strong>, à connaître avant de s’y fier : la valeur 1,5 m/s² est une accélération moyenne supposée, la même pour tous les avions et pour les deux manœuvres, alors qu’en réalité elle dépend de l’avion, de sa masse et de l’état de la piste ; c’est le point faible du modèle. Le coefficient n’est appliqué qu’au <strong>roulement au sol</strong>, la partie en vol de la distance de franchissement des 15 m / 50 ft n’étant pas affectée par la pente du sol. Les cartes publient en général une pente <strong>moyenne</strong> alors que le profil réel est fait de segments plus raides et plus plats. Enfin, cette correction <em>réduit</em> les distances sur une pente favorable : contrairement au reste de l’application, elle travaille dans le sens optimiste.</p>
+
+    <p><strong>Surface de piste.</strong> Vous déclarez la surface réelle de la piste, et rien de plus. <strong>Aucun facteur herbe n’est inventé</strong> : l’application n’applique une majoration que si vous en saisissez une vous-même dans la case « Majoration herbe », et seulement lorsque la piste est déclarée en herbe. Sans cette saisie, les distances affichées sont celles de vos chiffres bruts &mdash; donc <strong>optimistes sur une piste en herbe</strong>. Le mieux reste de saisir directement les chiffres herbe de votre manuel quand il en donne. Chaque nombre affiché ici remonte à quelque chose que vous avez fourni.</p>
+
+    <p><strong>Altitude-pression</strong> = altitude terrain + (1013,25 − QNH) × 30 ft. <strong>Température standard (ISA)</strong> à cette altitude = 15 − 2 × (altitude-pression / 1000) °C. <strong>Altitude-densité</strong> (affichée à titre indicatif seulement) ≈ altitude-pression + 120 ft par °C d’écart au standard ; le calcul des distances ne l’utilise pas, il applique directement les facteurs d’altitude-pression et d’écart ISA ci-dessus.</p>
+
+    <p><strong>Direction du vent.</strong> Un vent METAR est référencé au nord vrai, alors qu’un QFU est magnétique. Aucune correction de déclinaison magnétique n’est appliquée aux composantes de vent affichées. Aux latitudes moyennes la déclinaison locale est faible devant la précision de ce modèle, mais elle n’est <strong>pas</strong> négligeable partout sur Terre : là où elle est importante, appliquez-la vous-même avant de saisir la direction du vent.</p>
+
+    <p><strong>Marge de sécurité.</strong> Un facteur multiplicatif appliqué à la distance corrigée de franchissement des 15 m / 50 ft, réglable, valant 1,2 par défaut &mdash; la majoration de 20 % couramment enseignée en aviation légère. Aucun facteur n’est obligatoire en VFR privé dans la plupart des pays ; le choix reste celui du commandant de bord, et votre réglementation nationale peut en disposer autrement. À ne pas confondre avec la hauteur de franchissement de 15 m / 50 ft : ce n’est pas une réserve, c’est la distance réellement nécessaire pour franchir un obstacle de cette hauteur. La marge couvre autre chose &mdash; l’écart entre le manuel (avion neuf, pilote d’essai, piste idéale) et la réalité du jour (usure moteur, technique, état de la piste), plus l’imprécision des corrections extrapolées ci-dessus.</p>
+
+    <p><strong>Unités.</strong> Les distances basculent entre mètres et pieds, la température entre °C et °F, la pression entre hPa et inHg. Les altitudes sont toujours en pieds et le vent toujours en nœuds, dans les deux systèmes, parce que c’est ainsi qu’ils se lisent partout dans le monde. La hauteur de franchissement 15 m / 50 ft est une hauteur d’obstacle unique affichée dans les deux unités, et non deux valeurs différentes : 15 m valent 49,2 ft, et l’écart est très en deçà de la précision de tout ce qui est calculé ici.</p>
+
+    <p><strong>Instruments.</strong> <em>Vent</em> : bande de piste au QFU saisi, flèche indiquant d’où vient le vent, composantes dans les fenêtres numériques (HEAD/TAIL et XW, avec R ou L pour le côté du traversier) ; l’alerte traversier maxi démontré n’apparaît que si vous avez saisi ce chiffre, et un traversier maxi démontré n’est pas une limitation opérationnelle &mdash; c’est la valeur démontrée lors des essais en vol du constructeur. <em>Altimètre</em> : les aiguilles vertes suivent l’<strong>altitude terrain</strong> que vous avez saisie (courte : milliers de ft, longue : centaines), ce que lit un altimètre calé au QNH roues au sol. Sur une piste en pente, saisissez le seuil le plus haut : c’est le pénalisant. L’aiguille orange indique l’altitude-densité en milliers de ft, sur la même échelle que la courte aiguille verte. La légende du bas rappelle l’<strong>altitude-pression</strong>, qui est le chiffre réellement utilisé par le calcul, et l’écart ISA. Les cartouches des instruments restent en anglais (ALT · FEET, FIELD, DA, PA, ISA, HEAD/TAIL/XW), comme sur les instruments de bord réels.</p>
+  ` : `
     <p><strong>This app contains no aircraft and no aerodrome data.</strong> Every number below is one you typed, taken from your own flight manual and your own aerodrome chart. Nothing is looked up, nothing is republished, and nothing is checked on your behalf.</p>
 
     <p><strong>Your reference figures</strong> (as entered, in the current units):</p>
@@ -1495,7 +1670,7 @@ function renderMethod(ac){
 
     <p><strong>Limits of that correction</strong>, worth knowing before relying on it: the value 1.5 m/s² is an assumed average acceleration, the same for every aircraft and for both manoeuvres, whereas in reality it depends on the aircraft, its weight and the state of the runway; that is the weak point of the model. The coefficient is applied to the <strong>ground roll only</strong>, since the airborne part of the 15 m / 50 ft distance is not affected by the gradient of the surface. Charts usually publish an <strong>average</strong> slope while the real profile is made of steeper and flatter segments. Finally, this correction <em>reduces</em> distances on a favourable gradient: unlike the rest of the app, it works in the optimistic direction.</p>
 
-    <p><strong>Runway surface.</strong> You declare the surface your figures were read for, and the actual surface of the runway. If the two differ, <strong>no factor is invented</strong>: paved figures on grass raise an explicit warning and an optional grass penalty of your own choosing, and grass figures on pavement are left alone because they are already conservative. Every number this app shows traces back to something you supplied.</p>
+    <p><strong>Runway surface.</strong> You declare the actual surface of the runway, and nothing more. <strong>No grass factor is invented</strong>: a penalty is applied only if you type one yourself in the &ldquo;Grass penalty&rdquo; box, and only when the runway is declared grass. Without it, the distances shown are those of your raw figures &mdash; therefore <strong>optimistic on a grass runway</strong>. Better still, enter your manual's grass figures directly when it gives them. Every number this app shows traces back to something you supplied.</p>
 
     <p><strong>Pressure altitude</strong> = field elevation + (1013.25 − QNH) × 30 ft. <strong>Standard (ISA) temperature</strong> at that altitude = 15 − 2 × (pressure altitude / 1000) °C. <strong>Density altitude</strong> (shown for information only) ≈ pressure altitude + 120 ft per °C of deviation from standard; the distance calculation does not use it, it applies the pressure-altitude and ISA-deviation factors above directly.</p>
 
@@ -1505,7 +1680,7 @@ function renderMethod(ac){
 
     <p><strong>Units.</strong> Distances switch between metres and feet, temperature between °C and °F, pressure between hPa and inHg. Altitudes are always in feet and wind always in knots, in both systems, because that is how they are read worldwide. The 15 m / 50 ft screen height is a single obstacle height shown in both units, not two different values: 15 m is 49.2 ft, and the difference is far below the precision of anything computed here.</p>
 
-    <p><strong>Instruments.</strong> <em>Wind</em>: runway strip at the heading you entered, arrow showing where the wind blows from, components in the digital windows (HEAD/TAIL and XW, with R or L for the crosswind side); the max demonstrated crosswind alert only appears if you entered that figure, and a max demonstrated crosswind is not an operating limitation — it is the value demonstrated in the manufacturer's flight tests. <em>Altimeter</em>: the green needles follow the <strong>field elevation</strong> you entered (short: thousands of ft, long: hundreds), which is what an altimeter set to QNH reads with the wheels on the ground. On a sloping runway, enter the higher end: it is the penalising one. The orange needle shows density altitude in thousands of ft, on the same scale as the short green one. The bottom caption recalls the <strong>pressure altitude</strong>, which is the figure the computation actually uses, and the ISA deviation. <em>Day / night watch</em>: 24 h dial (midnight at the bottom, noon at the top), green arc = aeronautical day, amber hand = current time; sunrise and sunset are computed offline (NOAA algorithm, ≈ 1 min accuracy) at the coordinates you entered, and the arc uses sunrise − 30 min / sunset + 30 min, which is the French definition. <strong>Check the definition of night that applies where you fly</strong>, it is not the same everywhere. This is not a substitute for official ephemerides.</p>
+    <p><strong>Instruments.</strong> <em>Wind</em>: runway strip at the heading you entered, arrow showing where the wind blows from, components in the digital windows (HEAD/TAIL and XW, with R or L for the crosswind side); the max demonstrated crosswind alert only appears if you entered that figure, and a max demonstrated crosswind is not an operating limitation — it is the value demonstrated in the manufacturer's flight tests. <em>Altimeter</em>: the green needles follow the <strong>field elevation</strong> you entered (short: thousands of ft, long: hundreds), which is what an altimeter set to QNH reads with the wheels on the ground. On a sloping runway, enter the higher end: it is the penalising one. The orange needle shows density altitude in thousands of ft, on the same scale as the short green one. The bottom caption recalls the <strong>pressure altitude</strong>, which is the figure the computation actually uses, and the ISA deviation. Instrument placards stay in English in both languages (ALT · FEET, FIELD, DA, PA, ISA, HEAD/TAIL/XW), as they are on real panel instruments.</p>
   `;
 }
 
@@ -1516,17 +1691,21 @@ function renderMethod(ac){
    try/catch on both sides: localStorage can be unavailable (private browsing,
    some file:// contexts) and the app must work without it. */
 const SETTINGS_KEY = 'tlPerfEN';
+/* Every id here must EXIST. saveSettings() dereferences them in one try/catch, so
+   a single stale id throws on the first null and silently kills the whole save —
+   which is why acIcon, acSurfaceRef, rwLat and rwLon left this list at the same
+   time as their fields left the page. */
 const SAVED_FIELDS = [
-  'acName','acIcon','acSurfaceRef','acToRoll','acToDist','acLdRoll','acLdDist',
+  'acName','acToRoll','acToDist','acLdRoll','acLdDist',
   'acMtow','acXwind','acGrassPenalty',
-  'rwName','rwElev','rwSurface','rwQFU','rwTODA','rwLDA','rwSlope','rwLat','rwLon',
+  'rwName','rwElev','rwSurface','rwQFU','rwTODA','rwLDA','rwSlope',
   'temp','qnh','windDir','windSpeed','margin','metarIcao'
 ];
 function saveSettings(){
   try {
     const values = {};
     SAVED_FIELDS.forEach(id => { values[id] = document.getElementById(id).value; });
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ units: UNITS, values }));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ units: UNITS, lang: LANG, values }));
   } catch (e) { /* no persistence, no drama */ }
 }
 function restoreSettings(){
@@ -1536,6 +1715,8 @@ function restoreSettings(){
     // Units are restored FIRST and without conversion: the stored values were
     // already written in the stored unit system.
     if (s.units === 'imperial' || s.units === 'metric') UNITS = s.units;
+    // A stored language always wins over the browser default.
+    if (s.lang === 'fr' || s.lang === 'en') LANG = s.lang;
     if (s.values){
       SAVED_FIELDS.forEach(id => {
         if (typeof s.values[id] === 'string') document.getElementById(id).value = s.values[id];
@@ -1559,19 +1740,30 @@ function initDisclaimer(){
   };
 }
 
-/* ---------- Startup ---------- */
+/* Hangar quote: a random pilot aphorism in the header, never on the path of a
+   result. No assets.js, no quote, and that is not a problem.
+
+   The quote is DRAWN once and kept: re-rolling it on every language switch would
+   make the header jump for no reason. Only its translation is swapped, so both
+   lists must stay index-aligned in assets.js. */
+let quoteIndex = null;
+function renderQuote(){
+  const el = document.getElementById('hangarQuote');
+  const all = ASSETS_OK ? window.APP_ASSETS.quotes : null;
+  const list = all && all[LANG];
+  if (!Array.isArray(list) || !list.length){ el.textContent = ''; return; }
+  if (quoteIndex === null) quoteIndex = Math.floor(Math.random() * list.length);
+  el.textContent = t('quote.open') + list[quoteIndex % list.length] + t('quote.close');
+}
+
+/* ---------- Startup ----------
+   Order matters: restoreSettings() sets UNITS and LANG from storage, setUnits()
+   fixes the unit labels and the QNH step, then applyLang() rewrites every string
+   and calls recompute() itself. */
 restoreSettings();
 setUnits(UNITS, true);   // labels and steps only: the restored values are already in that system
 initDisclaimer();
-recompute();
-
-/* Hangar quote: a random pilot aphorism above the footer, never on the path of
-   a result. No assets.js, no quote, and that is not a problem. */
-if (ASSETS_OK && Array.isArray(window.APP_ASSETS.quotes) && window.APP_ASSETS.quotes.length){
-  const quotes = window.APP_ASSETS.quotes;
-  document.getElementById('hangarQuote').textContent =
-    'Hangar wisdom — “' + quotes[Math.floor(Math.random() * quotes.length)] + '”';
-}
+applyLang();
 
 /* ---------- Service worker (offline mode + update banner) ----------
    Two guards, and both are needed:

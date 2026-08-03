@@ -22,21 +22,24 @@ L'outil français reste intact et continue de vivre sa vie sur `main`.
 |---|---|
 | Nom Play Store | **Takeoff & Landing Perf** |
 | Package ID (définitif) | **`app.perfavions.runwayperf`** |
-| Langue | Anglais uniquement |
+| Langue | **Français et anglais**, interrupteur FR/EN dans l'en-tête à côté de Metric/Imperial. Revenu sur « anglais uniquement » le 3 août 2026 : Xavier et les testeurs de l'aéroclub sont francophones, et la phase de test fermé du Play Store se recrute là. Français par défaut si le navigateur est en français, langue mémorisée avec le reste des réglages. Les cartouches des instruments (ALT · FEET, FIELD, DA, PA, ISA, HEAD/TAIL/XW) restent en anglais dans les deux langues, comme sur un tableau de bord réel |
 | Données | Aucune base embarquée, saisie manuelle à usage unique, dernière saisie mémorisée |
+| Horloge jour/nuit | **Supprimée le 3 août 2026**, avec les champs latitude/longitude dont elle dépendait. `sunTimesUTC` et `buildNightClockSvg` sont retirés du code. La rétablir supposerait soit de redemander les coordonnées, soit la permission de localisation Android, écartée à l'étape 3 |
+| Silhouette avion | **Sélecteur supprimé le 3 août 2026.** Une silhouette générique fixe (`ICON_KEY = 'lowwing'`) illustre les en-têtes de carte et le schéma de piste ; elle n'a jamais touché un calcul. Les quatre SVG restent dans `assets.js` |
+| Surface de référence | **Sélecteur « Your figures are for a » supprimé le 3 août 2026**, ainsi que l'avertissement « Surface mismatch ». Le pilote ne déclare plus que la surface réelle de la piste. La majoration herbe s'applique désormais dès que la piste est déclarée en herbe ET qu'un pourcentage est saisi. La règle de fond ne bouge pas : aucun facteur herbe n'est inventé, et le panneau Méthode dit maintenant que sans saisie les distances sont optimistes sur l'herbe |
 | Fiche avion | Minimale : roulement + distance 15 m, décollage et atterrissage. **Les deux manœuvres sont indépendantes** : remplir le décollage seul (ou l'atterrissage seul) suffit à obtenir ce calcul-là, l'autre carte restant en attente. Décidé le 3 août 2026, après essai : exiger les quatre chiffres obligeait un pilote préparant un simple départ à ressortir ses chiffres d'atterrissage |
 | Unités | Un interrupteur global **Metric / Imperial** (m↔ft, °C↔°F, hPa↔inHg) ; altitudes toujours en pieds ; vent toujours en nœuds |
 | METAR | Conservé (VATSIM, couverture mondiale) |
-| Horloge jour/nuit | Conservée, latitude/longitude saisies à la main (facultatives) |
 | Juridique | Écran d'acceptation au premier lancement + disclaimer permanent |
 | Confidentialité | `privacy.html` rédigé et hébergé sur Vercel |
 | Bouton café | Conservé tel quel, ouvert dans le navigateur externe |
-| Organisation | Sous-dossier `app-en/` sur la branche `applitel` |
+| Organisation | Sous-dossier `app-en/`. **Les commits sont en réalité sur `main`**, pas sur `applitel` comme prévu à l'origine (`git log -- app-en/` le confirme) : dérive constatée le 3 août 2026, sans conséquence tant que la racine reste intacte, mais à trancher avant l'empaquetage |
+| Nom de l'appli installée | `manifest.json` (`name`, `lang`) reste **en anglais** et ne peut pas suivre l'interrupteur : un manifeste est lu à l'installation, pas à l'exécution. Le nom et l'écran de démarrage de la PWA installée et de l'APK sont donc anglais dans les deux langues. Assumé |
 | Visuel | Identique à l'actuel (cockpit sombre, instruments SVG) |
 | Conditions de référence | Imposées à 0 ft / 15 °C / sans vent, avec avertissement appuyé (voir Étape 1) |
 | En-tête | Photo `C172_Night_cockpit.jpg` **conservée** et copiée dans `app-en/` ; **logo de l'aéroclub retiré**, remplacé par `icons/icon.svg`. Décidé le 3 août 2026. Réserve à porter : la diffusion mondiale de la photo suppose de pouvoir en justifier les droits, Google pouvant suspendre la fiche sur signalement |
 | Hauteur d'obstacle | Affichée **« 15 m / 50 ft » en permanence**, dans les deux systèmes d'unités. Ce n'est pas une distance convertie mais une hauteur d'obstacle : le manuel européen dit 15 m, l'américain 50 ft, et l'écart réel (15 m = 49,2 ft) est très inférieur à la précision du modèle. Ne jamais afficher « 49 ft » |
-| Cache PWA | Préfixe **`tlperf-`** (`tlperf-v1`), distinct de `perf-avions-vN` : même origine Vercel, et le Cache Storage est par origine, pas par portée |
+| Cache PWA | Préfixe **`tlperf-`** (`tlperf-v5` au 3 août 2026), distinct de `perf-avions-vN` : même origine Vercel, et le Cache Storage est par origine, pas par portée |
 
 ## Arborescence cible
 
@@ -46,8 +49,8 @@ FJAOE/                      ← inchangé, version club française
   privacy.html              ← FAIT, politique de confidentialité (EN), pas déployée
   app-en/                   ← la nouvelle application — FAIT
     CLAUDE.md               ← ce fichier
-    index.html              ← app complète (logique + UI, en anglais)
-    assets.js               ← icônes SVG + citations, seuls vestiges de PERF_DB
+    index.html              ← app complète (logique + UI, bilingue FR/EN)
+    assets.js               ← icônes SVG + citations (FR et EN), seuls vestiges de PERF_DB
     sw.js                   ← service worker, cache tlperf-vN
     manifest.json
     C172_Night_cockpit.jpg  ← copiée depuis la racine (fond d'en-tête)
@@ -105,6 +108,8 @@ Six points qui ne figuraient pas au plan et qu'il ne faut pas redécouvrir :
 **L'interrupteur d'unités réécrit les valeurs, pas seulement les libellés.** 800 m doit devenir 2625 dans la case. La marge de sécurité (facteur sans dimension), l'altitude terrain (toujours en pieds), le vent (toujours en nœuds), la pente et les coordonnées ne sont **jamais** convertis. Le `step` du QNH doit suivre l'unité (`0.01` en inHg, sinon `type=number` refuse 29,92). L'aller-retour métrique → impérial → métrique redonne les valeurs exactes ; en revanche l'arrondi entier du champ température en °F introduit une granularité de 0,3 °C, assumée.
 
 **Le service worker a deux gardes, pas une.** `location.protocol.startsWith('http')` **passe** sous Capacitor, qui sert depuis `https://localhost` : le test `!window.Capacitor` doit donc être dans le bloc d'enregistrement du HTML, pas seulement dans `sw.js`. Par ailleurs le worker de la racine efface **tous** les caches qui ne sont pas le sien : il évincera donc `tlperf-v1` à chaque mise à jour du club (sans gravité, les fichiers sont retéléchargés). Le worker anglais, lui, limite volontairement sa purge à son propre préfixe pour ne pas rendre la pareille.
+
+**Le bilinguisme (ajouté le 3 août 2026) tient en deux mécanismes.** Le balisage statique porte `data-i18n` (texte), `data-i18n-html` (balises autorisées) ou `data-i18n-ph` (attribut placeholder), et `applyLang()` les réécrit. Tout ce que le JS construit appelle `t('clé')` **au moment du rendu**, jamais au chargement, si bien qu'un `recompute()` suffit à repasser l'écran dans l'autre langue. Trois pièges rencontrés : **(a)** un libellé traduisible ne doit jamais contenir un nœud de texte nu à côté de son `span.unit-hint`, car écrire dans le libellé effacerait ce span et `refreshUnitLabels()` n'aurait plus rien à remplir — le texte vit toujours dans son propre `<span data-i18n>` ; **(b)** l'écran d'acceptation recouvre l'en-tête au premier lancement, donc il porte **son propre** sélecteur FR/EN, sans quoi un francophone ne pourrait pas l'atteindre ; **(c)** les deux listes de citations d'`assets.js` sont **indexées en parallèle**, et l'index est tiré une seule fois, pour que la bascule de langue ne fasse pas sauter l'en-tête.
 
 **Le lien vers `privacy.html` est absolu.** Capacitor copie `app-en/` à la racine du web root, donc un `../privacy.html` en sortirait et donnerait un 404 dans l'APK. Le pied de page pointe sur `https://perf-avions-3skt.vercel.app/privacy.html`, qui est aussi l'URL à déclarer au Play Console.
 
