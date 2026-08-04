@@ -1,4 +1,4 @@
-/* Service worker — Takeoff & Landing Perf (worldwide edition)
+/* Service worker — toldcalc (worldwide edition)
 
    Makes the app usable with no connection, which is the real use case: working
    out a performance at the airfield, in flight mode, with no signal.
@@ -20,7 +20,7 @@
       next online visit). This worker deliberately does not return the favour:
       evicting the club app's offline cache from here would be a real bug. */
 const CACHE_PREFIX = 'tlperf-';
-const CACHE = CACHE_PREFIX + 'v8';
+const CACHE = CACHE_PREFIX + 'v9';
 
 const ASSETS = [
   './',

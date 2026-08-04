@@ -1,6 +1,6 @@
 {
-  "name": "Takeoff & Landing Perf",
-  "short_name": "T/L Perf",
+  "name": "toldcalc",
+  "short_name": "toldcalc",
   "description": "Takeoff and landing distance calculator. You enter your own aircraft figures and your own runway — no built-in database.",
   "lang": "en",
   "dir": "ltr",

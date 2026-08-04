@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Takeoff &amp; Landing Perf</title>
+<title>toldcalc</title>
 <meta name="description" content="Takeoff and landing distance calculator. You enter your own aircraft figures and your own runway — no built-in database.">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#17191d">
@@ -406,7 +406,7 @@
   <header>
     <div class="brand">
       <img src="icons/icon.svg" class="logo" alt="">
-      <h1 data-i18n="app.title">Takeoff &amp; Landing Perf</h1>
+      <h1 data-i18n="app.title">toldcalc</h1>
     </div>
     <!-- Language and units travel together: two identical rockers in one cluster,
          so a 375 px screen wraps them as a block rather than splitting them. -->
@@ -627,7 +627,7 @@
   <!-- The privacy link is ABSOLUTE on purpose. Capacitor copies app-en/ to the
        web root, so a relative "../privacy.html" would escape it and 404 inside
        the packaged app. This URL is also the one declared to the Play Console. -->
-  <footer><span data-i18n="footer">Takeoff &amp; Landing Perf &middot; no built-in aircraft or aerodrome data &middot; every figure is the one you entered &middot;</span>
+  <footer><span data-i18n="footer">toldcalc &middot; no built-in aircraft or aerodrome data &middot; every figure is the one you entered &middot;</span>
     <a href="https://perf-avions-3skt.vercel.app/privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--cream-dim);" data-i18n="footer.privacy">Privacy policy</a></footer>
 
 </div>
@@ -668,8 +668,8 @@ const ICON_KEY = 'lowwing';
 const STRINGS = {
   en: {
     'html.lang':'en', 'locale':'en-US',
-    'app.title':'Takeoff &amp; Landing Perf',
-    'doc.title':'Takeoff & Landing Perf',
+    'app.title':'toldcalc',
+    'doc.title':'toldcalc',
     'aria.lang':'Language', 'aria.units':'Units',
     'units.metric':'Metric', 'units.imperial':'Imperial',
 
@@ -710,7 +710,7 @@ const STRINGS = {
     'method.title':'⚠ Method, assumptions and warnings',
     'disclaimer':'<strong>Warning.</strong> This tool assists flight preparation. Its altitude, temperature, wind and slope corrections are approximations applied to figures you supply, not certified performance data. It does not replace your aircraft’s official Flight Manual, the actual weather of the day, or the judgement of the pilot in command. Always check your real margins before every takeoff and landing.',
     'coffee':'Buy me a coffee',
-    'footer':'Takeoff & Landing Perf · no built-in aircraft or aerodrome data · every figure is the one you entered ·',
+    'footer':'toldcalc · no built-in aircraft or aerodrome data · every figure is the one you entered ·',
     'footer.privacy':'Privacy policy',
 
     /* Dynamic */
@@ -753,8 +753,8 @@ const STRINGS = {
   },
   fr: {
     'html.lang':'fr', 'locale':'fr-FR',
-    'app.title':'Perfos décollage &amp; atterrissage',
-    'doc.title':'Perfos décollage & atterrissage',
+    'app.title':'toldcalc',
+    'doc.title':'toldcalc',
     'aria.lang':'Langue', 'aria.units':'Unités',
     'units.metric':'Métrique', 'units.imperial':'Impérial',
 
@@ -795,7 +795,7 @@ const STRINGS = {
     'method.title':'⚠ Méthode, hypothèses et avertissements',
     'disclaimer':'<strong>Avertissement.</strong> Cet outil aide à la préparation du vol. Ses corrections d’altitude, de température, de vent et de pente sont des approximations appliquées à des chiffres que vous fournissez, et non des performances certifiées. Il ne remplace ni le manuel de vol officiel de votre avion, ni la météo réelle du jour, ni le jugement du commandant de bord. Vérifiez toujours vos marges réelles avant chaque décollage et chaque atterrissage.',
     'coffee':'Offrez-moi un café',
-    'footer':'Perfos décollage & atterrissage · aucune base avion ni aérodrome · chaque chiffre est celui que vous avez saisi ·',
+    'footer':'toldcalc · aucune base avion ni aérodrome · chaque chiffre est celui que vous avez saisi ·',
     'footer.privacy':'Politique de confidentialité',
 
     /* Dynamique */
