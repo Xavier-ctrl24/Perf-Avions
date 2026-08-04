@@ -20,8 +20,8 @@ L'outil français reste intact et continue de vivre sa vie sur `main`.
 
 | Sujet | Choix |
 |---|---|
-| Nom Play Store | **Takeoff & Landing Perf** |
-| Package ID (définitif) | **`app.perfavions.runwayperf`** |
+| Nom Play Store | **toldcalc** (TOLD = Take-Off and Landing Distances). Retenu le 4 août 2026 à l'empaquetage, remplace « Takeoff & Landing Perf » |
+| Package ID (définitif) | **`com.xavier.toldcalc`**, gravé dans l'APK debug installé le 4 août 2026. Remplace `app.perfavions.runwayperf`, jamais utilisé |
 | Langue | **Français et anglais**, interrupteur FR/EN dans l'en-tête à côté de Metric/Imperial. Revenu sur « anglais uniquement » le 3 août 2026 : Xavier et les testeurs de l'aéroclub sont francophones, et la phase de test fermé du Play Store se recrute là. Français par défaut si le navigateur est en français, langue mémorisée avec le reste des réglages. Les cartouches des instruments (ALT · FEET, FIELD, DA, PA, ISA, HEAD/TAIL/XW) restent en anglais dans les deux langues, comme sur un tableau de bord réel |
 | Données | Aucune base embarquée, saisie manuelle à usage unique, dernière saisie mémorisée |
 | Horloge jour/nuit | **Supprimée le 3 août 2026**, avec les champs latitude/longitude dont elle dépendait. `sunTimesUTC` et `buildNightClockSvg` sont retirés du code. La rétablir supposerait soit de redemander les coordonnées, soit la permission de localisation Android, écartée à l'étape 3 |
@@ -127,7 +127,7 @@ Le push sur `applitel` crée par ailleurs une **preview Vercel** : l'appli angla
 Automatisé par un `package.json` et deux scripts npm.
 
 1. `npm init` + installation de `@capacitor/core`, `@capacitor/cli`, `@capacitor/android`, `@capacitor/assets` (génération des icônes). Aucun plugin pour le lien café tant que le test sur APK n'a pas prouvé qu'il en faut un.
-2. `capacitor.config.json` : `appId: app.perfavions.runwayperf`, `appName: Takeoff & Landing Perf`, `webDir: www`.
+2. `capacitor.config.json` : `appId: com.xavier.toldcalc`, `appName: toldcalc`, `webDir: www`.
 3. Script `sync` : copie `app-en/` vers `capacitor/www/` puis lance `npx cap sync android`.
 4. Le service worker est **désactivé sous Capacitor** (détection de `window.Capacitor`) : l'appli est déjà entièrement locale, et un cache superposé au conteneur natif est la recette classique pour rester bloqué sur une vieille version.
 5. `@capacitor/assets` génère d'un coup toutes les tailles d'icônes Android et les icônes adaptatives à partir de `icons/icon.svg` existant.
