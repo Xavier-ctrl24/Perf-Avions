@@ -1,8 +1,11 @@
 # Takeoff & Landing Perf — version mondiale pour le Play Store
 
-> **Statut : Étape 1 terminée le 3 août 2026 (application web anglaise écrite et
-> vérifiée au navigateur). `privacy.html` est rédigé mais PAS déployé. Étapes 2
-> à 5 non commencées. Rien n'est commité ni poussé à ce stade.**
+> **Statut au 5 août 2026 : étapes 1 à 4 terminées** (appli bilingue écrite,
+> `privacy.html` déployé en production, empaquetage Capacitor, AAB signé).
+> **Étape 5 en cours** : fiche Play Console créée, les 11 déclarations de
+> « Contenu de l'application » sont traitées ; restent les captures d'écran, la
+> fiche du Store, la piste de test fermé et les testeurs. Tout est commité et
+> poussé sur `main`.
 > Ce fichier est la feuille de route de la branche `applitel`. Il est chargé
 > automatiquement au démarrage de toute session Claude Code travaillant dans
 > `app-en/`. Le CLAUDE.md de la racine décrit l'outil français, qui reste la
@@ -145,7 +148,78 @@ Automatisé par un `package.json` et deux scripts npm.
 6. `gradlew bundleRelease` produit l'**AAB signé** (format exigé par Google). Un `assembleRelease` produit en plus l'**APK** pour tester en direct sur le téléphone.
 7. Vérification sur l'émulateur déjà installé, et captures d'écran du store réalisées depuis cet émulateur (automatisable en ligne de commande).
 
-## Étape 5 — Publication Play Console
+## Étape 5 — Publication Play Console — 🔄 EN COURS depuis le 5 août 2026
+
+> Ce qui suit sous « État au 5 août 2026 » est un **compte rendu**. Le reste de
+> la section est le plan d'origine, conservé pour ce qui n'est pas encore fait.
+
+### État au 5 août 2026
+
+**Compte développeur vérifié.** Le blocage du 3 août est levé.
+
+**Fiche créée** : `toldcalc`, package `com.xavier.toldcalc` (le Play Console
+demande désormais le nom du package **à la création**, contrairement à ce que
+supposait le plan ; il n'est plus seulement déduit du premier AAB), langue par
+défaut anglais (États-Unis), Application, **Sans frais — irréversible une fois
+publiée**.
+
+**11 déclarations sur 11 traitées** dans « Contenu de l'application » :
+
+| Déclaration | Réponse | Justification à ne pas rejouer |
+|---|---|---|
+| Règles de confidentialité | `https://perf-avions-3skt.vercel.app/privacy.html` | vérifiée publique et sans authentification |
+| Informations de connexion | tout accessible sans identifiants | ni compte ni mot de passe ; l'écran d'acceptation n'est pas une connexion |
+| Annonces | non | aucune régie |
+| Identifiant publicitaire | non | vérifié : le manifeste Android ne déclare que `INTERNET`, pas `AD_ID` |
+| Applis gouvernementales / Fonctionnalités financières / Santé | non | le commanditaire, pas le sujet ; le bouton café est un lien externe |
+| Cible | **18 ans et plus uniquement** | cocher une tranche mineure ferait basculer l'appli dans le programme Familles, avec ses contraintes sur les liens externes |
+| Sécurité des données | **aucune collecte, aucun partage** | « collecter » = transmettre hors de l'appareil ; le METAR n'envoie qu'un code OACI, qui n'est aucun des types de données Google |
+| Classification du contenu | tout public partout (PEGI 3, ESRB Everyone, USK) | catégorie « Utilitaire », surtout pas « Jeu » |
+| Catégorie et coordonnées | Applications → Outils ; `shinai24@gmail.com` (**publique**), site Vercel, pas de téléphone | |
+
+**Renommage `toldcalc` du 5 août 2026.** L'en-tête de l'appli affichait encore
+« Takeoff & Landing Perf » (EN) et « Perfos décollage & atterrissage » (FR)
+alors que la fiche s'appelle toldcalc. Corrigé partout, **dans les deux
+langues** : c'est un nom propre. `privacy.html` désignait par ailleurs le
+package abandonné `app.perfavions.runwayperf`. Commit `71303ea`, poussé et
+redéployé sur Vercel, texte en ligne vérifié.
+
+**AAB signé refait le 5 août 2026** avec le nouveau nom, `versionCode 1`,
+empreinte SHA-1 identique à celle du 4 août (`62:7C:A8:…`), donc bien la même
+clé d'upload.
+
+**Éléments de fiche préparés** (dans `Applitel-Android\assets-src\`, hors
+dépôt) : `fiche-play-store.md` (titre, descriptions courte et longue, FR et EN,
+compteurs de caractères vérifiés), `feature-graphic.png` 1024 × 500 et sa
+source SVG, `icon-play-512.png`. Cette icône est **régénérée carrée et opaque**
+et non reprise de `app-en/icons/icon-512.png` : ce dernier a des coins arrondis
+transparents, et Google applique en plus son propre masque, d'où un double
+arrondi.
+
+**Émulateur inutilisable sur cette machine** : `x86_64 emulation currently
+requires hardware acceleration`, la fonctionnalité Windows « Plateforme
+d'hyperviseur Windows » n'est pas activée. Ne pas y revenir sans décision
+explicite de Xavier : c'est une modification système avec redémarrage. Les
+captures se font donc **sur son téléphone**, avec l'APK debug.
+
+**Captures d'écran** : scénario retenu, **KOSH (Wittman Regional, Oshkosh) avec
+un Cessna 172S et le METAR réel**, en unités impériales. Les captures brutes du
+téléphone font 1080 × 2400, soit 1:2,22, **plus haut que le 9:16 maximum de
+Google** : prévoir un recadrage en 1080 × 1920.
+
+### Reste à faire
+
+1. Refaire les captures avec l'APK renommé, les recadrer en 1080 × 1920.
+2. Remplir la fiche Play Store (EN par défaut, puis ajouter la traduction FR).
+3. Créer la piste de test fermé, y téléverser l'AAB.
+4. Recruter les testeurs. **Le compteur du Play Console affiche les testeurs
+   *inscrits*, pas les adresses invitées** : il reste à 0 tant que les pilotes
+   n'ont pas cliqué sur le lien d'acceptation.
+5. Prévenir Xavier qu'après le premier envoi, Google enrôle l'appli dans Play
+   App Signing et affiche une **empreinte de signature différente** de sa clé
+   d'upload. C'est normal.
+
+### Plan d'origine (3 août 2026)
 
 Compte développeur créé, **vérification d'identité en cours au 3 août 2026**.
 
@@ -176,4 +250,4 @@ Points 1, 2 et 5 **passés le 3 août 2026**, servis depuis `python -m http.serv
 
 - **Photo de cockpit** : justificatif de droits à réunir avant le dépôt sur le Play Store (décision du 3 août 2026 de la conserver).
 - **`icons/icon.svg` et `icons/favicon.svg` de la racine** : XML invalide (`--` dans un commentaire), donc le favicon de l'outil du club ne s'affiche probablement pas. Correction en une ligne, à faire sur `main`, hors périmètre de cette branche.
-- **Rien n'est commité** sur `applitel` à ce jour, et `privacy.html` n'est pas fusionné dans `main`.
+- ~~**Rien n'est commité** sur `applitel` à ce jour, et `privacy.html` n'est pas fusionné dans `main`.~~ Réglé : tout est sur `main` et `privacy.html` est servi en production.
