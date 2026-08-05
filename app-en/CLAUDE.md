@@ -207,17 +207,32 @@ un Cessna 172S et le METAR réel**, en unités impériales. Les captures brutes 
 téléphone font 1080 × 2400, soit 1:2,22, **plus haut que le 9:16 maximum de
 Google** : prévoir un recadrage en 1080 × 1920.
 
-### Reste à faire
+**Captures d'écran faites**, dans `images-app\play\` (hors dépôt, non commité) :
+5 fichiers 1080 × 1920 nommés dans l'ordre d'affichage voulu, le résultat en
+premier. Recette : capture brute 1080 × 2400 recadrée `crop((0,110,1080,2030))`,
+ce qui retire la barre d'état et la barre de navigation et tombe pile sur 9:16.
+**Ne pas se fier à l'ordre de collage des captures dans la conversation, il ne
+suit pas l'ordre chronologique des fichiers** — regarder chaque image.
 
-1. Refaire les captures avec l'APK renommé, les recadrer en 1080 × 1920.
-2. Remplir la fiche Play Store (EN par défaut, puis ajouter la traduction FR).
-3. Créer la piste de test fermé, y téléverser l'AAB.
-4. Recruter les testeurs. **Le compteur du Play Console affiche les testeurs
-   *inscrits*, pas les adresses invitées** : il reste à 0 tant que les pilotes
-   n'ont pas cliqué sur le lien d'acceptation.
-5. Prévenir Xavier qu'après le premier envoi, Google enrôle l'appli dans Play
-   App Signing et affiche une **empreinte de signature différente** de sa clé
-   d'upload. C'est normal.
+**Fiche Play Store remplie** le 5 août 2026, statut **« Prête à être envoyée
+pour examen »**. Langue fr-FR ajoutée via le sélecteur de langue de la fiche →
+**« Gérer les langues »** (et non par la page « Traductions » du menu, qui ne
+propose que le service payant de traduction humaine, ni par l'import de fichier).
+
+### Reste à faire — reprise du 6 août 2026
+
+1. **Vérifier que les trois champs de la fiche fr-FR sont bien remplis**, pas
+   seulement la langue ajoutée : une fiche de langue vide bloque l'envoi.
+2. Créer / ouvrir la piste de test fermé (**une seule piste** : le compteur de
+   testeurs est par piste), y téléverser **`toldcalc.aab` du Bureau**, jamais
+   l'APK.
+3. Au premier téléversement, Google enrôle l'appli dans **Play App Signing** et
+   affichera une **empreinte SHA-1 différente** de la clé d'upload
+   (`62:7C:A8:…`, qui reste visible sous « certificat de clé d'importation »).
+   C'est normal, le dire à Xavier avant qu'il le découvre.
+4. Recruter les testeurs. **Le compteur affiche les testeurs *inscrits*, pas les
+   adresses invitées** : il reste à 0 tant que les pilotes n'ont pas cliqué sur
+   le lien d'acceptation.
 
 ### Plan d'origine (3 août 2026)
 
