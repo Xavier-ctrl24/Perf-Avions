@@ -305,7 +305,7 @@
      hexadécimal et disparaît, ce qui collait l'avion au texte. */
   .hangar-quote::before{content:"\2708\00a0";font-style:normal;color:var(--phos);}
 
-  /* Bottom action row, single occupant: the support button. */
+  /* Bottom action row: the two asks, rating first then support. */
   .print-row{
     display:flex;justify-content:center;align-items:center;
     gap:12px;flex-wrap:wrap;margin-top:18px;
@@ -320,6 +320,18 @@
   }
   .coffee-btn:hover{background:#3a2c12;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.35);}
   .coffee-btn .cup{font-size:1rem;line-height:1;}
+
+  /* Rating button, same pill as the support one but in avionics green rather
+     than amber, so the two asks never read as one repeated donate button. */
+  .rate-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:10px 16px;border-radius:999px;
+    border:1px solid #2f6b45;background:var(--green-bg);color:var(--phos);
+    font-size:.82rem;text-decoration:none;
+    transition:background .15s ease,transform .15s ease,box-shadow .15s ease;
+  }
+  .rate-btn:hover{background:#123a20;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.35);}
+  .rate-btn .star{font-size:1rem;line-height:1;}
 
   /* ==== First-run acceptance screen ====
      Full-screen, above everything, and NOT dismissible by clicking outside:
@@ -615,6 +627,18 @@
        every warning this app carries. -->
 
   <div class="print-row">
+    <!-- Rating link. The plain https listing URL on purpose, not market://: the
+         same file is served on the web, where a market: scheme dead-ends, while
+         Android resolves this URL to the Play Store app anyway. Capacitor hands
+         off-origin URLs to the system browser, same assumption as the support
+         link below, and unverified on an APK until the next build.
+         Note it stays dormant until the app leaves closed testing: the listing
+         404s for anyone not enrolled as a tester. -->
+    <a class="rate-btn" href="https://play.google.com/store/apps/details?id=com.xavier.toldcalc"
+       target="_blank" rel="noopener noreferrer">
+      <span class="star" aria-hidden="true">&#9733;</span> <span data-i18n="rate">Rate this app</span>
+    </a>
+
     <!-- Support link, pure decoration: no role in any computation. At the bottom
          on purpose: it is an ask, and an ask comes after the service, not before.
          rel="noopener" prevents the opened page from reaching back into this one. -->
@@ -709,6 +733,7 @@ const STRINGS = {
     'm.dist15':'Over 15 m / 50 ft', 'm.margin':'With margin', 'm.avail':'Available',
     'method.title':'⚠ Method, assumptions and warnings',
     'disclaimer':'<strong>Warning.</strong> This tool assists flight preparation. Its altitude, temperature, wind and slope corrections are approximations applied to figures you supply, not certified performance data. It does not replace your aircraft’s official Flight Manual, the actual weather of the day, or the judgement of the pilot in command. Always check your real margins before every takeoff and landing.',
+    'rate':'Rate this app',
     'coffee':'Buy me a coffee',
     'footer':'toldcalc · no built-in aircraft or aerodrome data · every figure is the one you entered ·',
     'footer.privacy':'Privacy policy',
@@ -794,6 +819,7 @@ const STRINGS = {
     'm.dist15':'Franchissement 15 m / 50 ft', 'm.margin':'Avec marge', 'm.avail':'Disponible',
     'method.title':'⚠ Méthode, hypothèses et avertissements',
     'disclaimer':'<strong>Avertissement.</strong> Cet outil aide à la préparation du vol. Ses corrections d’altitude, de température, de vent et de pente sont des approximations appliquées à des chiffres que vous fournissez, et non des performances certifiées. Il ne remplace ni le manuel de vol officiel de votre avion, ni la météo réelle du jour, ni le jugement du commandant de bord. Vérifiez toujours vos marges réelles avant chaque décollage et chaque atterrissage.',
+    'rate':'Noter l\'appli',
     'coffee':'Offrez-moi un café',
     'footer':'toldcalc · aucune base avion ni aérodrome · chaque chiffre est celui que vous avez saisi ·',
     'footer.privacy':'Politique de confidentialité',
