@@ -17,3 +17,8 @@
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# === Captures et tuiles du Play Store (lourdes, refabricables) ===
+# Le script de composition, lui, est versionné.
+/images-app/**/*.png
+/images-app/**/*.jpg

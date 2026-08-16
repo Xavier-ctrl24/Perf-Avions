@@ -219,11 +219,72 @@ pour examen »**. Langue fr-FR ajoutée via le sélecteur de langue de la fiche 
 **« Gérer les langues »** (et non par la page « Traductions » du menu, qui ne
 propose que le service payant de traduction humaine, ni par l'import de fichier).
 
+### Deuxième envoi — 16 août 2026
+
+**AAB `versionCode 2` / `versionName 1.1` envoyé sur la piste Alpha, avec les
+nouvelles captures de la fiche en-US ; les deux modifications sont parties dans
+un seul examen.** Détails à ne pas redécouvrir :
+
+- Contenu de la version : le bouton « Noter l'appli » (commit `84aac4f`) et le
+  retrait de deux prototypes qui s'étaient glissés dans le paquet.
+  `maquette-*.html` est désormais dans la liste `-Exclude` des deux commandes de
+  build de `Applitel-Android\REBUILD.md`.
+- Signature vérifiée après build : SHA-1 `62:7C:A8:…`, la même clé d'upload
+  qu'en v1. `keytool -printcert -jarfile` reste le seul contrôle qui prouve que
+  l'AAB est signé, « BUILD SUCCESSFUL » ne le prouve pas.
+- Notes de version FR + EN conservées dans `app-en/notes-de-version-v1.1.md`.
+  Elles se saisissent **entre** les balises `<en-US>` / `<fr-FR>` déjà présentes
+  dans le champ, 500 caractères par langue.
+- **Tuiles de la fiche** : 5 posters 1080 × 1920 composés à partir des vraies
+  captures par `images-app\compose-poster.py` (un tableau de 5 entrées, un seul
+  moteur de rendu). Titre + sous-titre + recadrages agrandis de l'app sur le
+  fond radial de l'appli. Deux règles y sont écrites en commentaire et méritent
+  d'être relues avant d'y toucher : recadrer au bord du *contenu* et non du
+  panneau, et ne pas coller un recadrage plein cadre (1080) quand les libellés
+  arrivent au bord, sinon la tuile se lit comme une capture coupée — d'où les
+  950 px de large des tuiles 02 à 05.
+- Les mêmes 5 tuiles ont été mises dans **téléphone** *et* **tablette 7
+  pouces** : ce dernier champ est obligatoire dans la fiche, le vider bloque
+  l'enregistrement.
+- La fiche **fr-FR garde les anciennes captures** : les tuiles sont en anglais.
+  Refaire un jeu français le jour venu — les titres et sous-titres sont des
+  données dans le tableau du script, c'est une modification d'une ligne chacun.
+
+**Bug repéré, pas encore traité** : en mode impérial anglais, le champ QNH
+affiche `29,94` avec une **virgule** décimale (visible sur la capture
+`05-metar.png`). À corriger dans `app-en/index.html` avant la prochaine version.
+
 ### Reste à faire — reprise du 6 août 2026
 
-1. **Vérifier que les trois champs de la fiche fr-FR sont bien remplis**, pas
-   seulement la langue ajoutée : une fiche de langue vide bloque l'envoi.
-2. Créer / ouvrir la piste de test fermé (**une seule piste** : le compteur de
+Sauvegarde hors PC de `toldcalc-upload.jks` et de son mot de passe : **faite**
+(confirmé par Xavier le 6 août 2026). Photo de cockpit : Xavier a tranché, on la
+garde et on ne cherche plus sa provenance — sujet clos, ne pas le rouvrir.
+
+1. ~~Vérifier que les trois champs de la fiche fr-FR sont bien remplis~~ —
+   **fait**, confirmé le 6 août 2026.
+**Version de test fermé envoyée à Google pour examen le 6 août 2026.** État de la
+piste au moment de l'envoi :
+
+- Piste unique **« Alpha »**, `Tests fermés`. Ne pas en créer une seconde.
+- **Play App Signing actif** ; l'`.aab` porte le `versionCode` **1** — la
+  prochaine version devra passer à 2, Google refuse deux envois au même numéro.
+- Bundle : 2,99 Mo, API min 24, SDK cible 36. Un seul avertissement, sans
+  conséquence : pas de fichier de mapping R8/ProGuard (il n'y a pas de code Java
+  obscurci dans une coque WebView). Il reviendra à chaque version, l'ignorer.
+- Testeurs gérés par **groupe Google `toldcalc-testeurs@googlegroups.com`**
+  (9 membres au 6 août, dont Xavier). Avantage : la liste se modifie côté Google
+  Groupes, sans retoucher ni republier la piste.
+- Diffusion **mondiale** (176 pays + « reste du monde »).
+- Adresse de commentaires des testeurs : `shinai24@gmail.com`.
+- 16 modifications envoyées, dont tous les formulaires bloquants (sécurité des
+  données, classification, cible et contenu 18+, applis de santé, annonces,
+  catégorie « Outils », URL de confidentialité).
+
+Point à surveiller : `mimi.danon@hotmail.fr` est dans le groupe mais une adresse
+non-Gmail ne fonctionne comme testeur que si elle est rattachée à un compte
+Google. À vérifier avant de compter cette personne dans les 12.
+
+2. ~~Créer / ouvrir la piste de test fermé~~ — **fait le 6 août 2026.** Détail : (**une seule piste** : le compteur de
    testeurs est par piste), y téléverser **`toldcalc.aab` du Bureau**, jamais
    l'APK.
 3. Au premier téléversement, Google enrôle l'appli dans **Play App Signing** et
