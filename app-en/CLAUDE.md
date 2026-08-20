@@ -254,6 +254,61 @@ un seul examen.** Détails à ne pas redécouvrir :
 affiche `29,94` avec une **virgule** décimale (visible sur la capture
 `05-metar.png`). À corriger dans `app-en/index.html` avant la prochaine version.
 
+### Test fermé validé — 20 août 2026
+
+Les trois conditions du Play Console sont barrées : version de test fermé
+publiée, 12 testeurs inscrits, 14 jours de test écoulés. Le bouton **« Demander
+à publier en production »** est actif. Il ouvre un **questionnaire de 9
+questions, 300 caractères maximum par réponse**, examiné par un humain, et non
+un simple clic ; la revue qui suit prend de 2 à 7 jours.
+
+Réponses rédigées et calibrées dans
+[`feedback/reponses-questionnaire-production.md`](../feedback/reponses-questionnaire-production.md).
+Deux pièges consignés là-bas :
+
+- Le PDF `feedback/toldcalc_production.pdf` vient du prestataire de testeurs et
+  contient des réponses type. Elles sont envoyées à l'identique par tous ses
+  clients : recopiées telles quelles, c'est un motif de rejet connu. Elles
+  contiennent aussi deux affirmations fausses pour toldcalc (« commercial
+  pilots » dans la cible, 10k-100k installations la première année).
+- La réponse 8 (« quels changements le test a-t-il produits ») doit décrire une
+  appli que Google peut voir. **La marge à 1,3 n'est pas dans l'AAB en ligne**,
+  qui est resté en 1.1 : il faut une version 1.2 / `versionCode` 3 construite
+  après le commit `eeda670` avant de remplir le formulaire.
+
+### Retour d'Éric, responsable sécurité de l'aéroclub (20 août 2026)
+
+Le retour de test le plus substantiel reçu, et la meilleure pièce du dossier de
+production : un avis d'expert, nominatif, sur le cœur métier de l'outil. À
+conserver tel quel, il resservira.
+
+- Valeurs jugées **bonnes et pertinentes** sur les avions du club, y compris
+  pour ceux dont le manuel ne fournit pas d'abaque.
+- Facteurs de correction **conservateurs**, mais représentatifs de la réalité —
+  ce qui valide a posteriori le choix d'extrapoler les facteurs du seul manuel
+  WT9 à toute la flotte.
+- **Marge par défaut à 1,3** plutôt que 1,2. **Faite le 20 août 2026** (commit
+  `eeda670`) dans les deux applications, plus `indexTEST.html`, avec les caches
+  des deux service workers bumpés en v11. Le réglage déjà enregistré dans
+  `localStorage` n'est **pas** écrasé : le nouveau défaut ne vaut que pour les
+  nouvelles installations, et un téléphone qui affiche encore 1,2 n'est pas un
+  bug.
+- **Distance d'alignement de 20 à 30 m** à mettre en évidence, beaucoup de
+  pilotes en consommant près de 100 m pour s'aligner. **Écartée par Xavier le
+  20 août 2026**, non retenue pour l'instant. Techniquement, ce serait un champ
+  s'ajoutant au roulement, donc aussi à la distance de franchissement des 15 m.
+- Propose de **référencer le lien sur l'ordinateur de réservation du club**, au
+  même titre que l'outil de centrage, et d'en faire la promotion comme outil
+  disponible.
+- Réserve explicite : **pas de diffusion par défaut aux élèves** avant le
+  brevet, qui doivent s'en tenir aux données du manuel de vol et à leurs propres
+  facteurs de correction. À ne pas mettre dans le formulaire Google, mais c'est
+  la confirmation par un responsable sécurité que l'appli doit continuer à se
+  présenter comme une **aide à la préparation, jamais comme une source de
+  référence** — la ligne tenue dans le panneau « Méthode » et dans l'écran
+  d'acceptation.
+- Compare le **schéma de piste** au logiciel de calcul utilisé chez Air France.
+
 ### Reste à faire — reprise du 6 août 2026
 
 Sauvegarde hors PC de `toldcalc-upload.jks` et de son mot de passe : **faite**
