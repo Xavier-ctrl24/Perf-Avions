@@ -250,9 +250,21 @@ un seul examen.** Détails à ne pas redécouvrir :
   Refaire un jeu français le jour venu — les titres et sous-titres sont des
   données dans le tableau du script, c'est une modification d'une ligne chacun.
 
-**Bug repéré, pas encore traité** : en mode impérial anglais, le champ QNH
-affiche `29,94` avec une **virgule** décimale (visible sur la capture
-`05-metar.png`). À corriger dans `app-en/index.html` avant la prochaine version.
+**Bug de la virgule — corrige le 20 aout 2026.** En mode imperial anglais, le
+champ QNH affichait `29,94` avec une **virgule** decimale (visible sur la
+capture `05-metar.png`). Cause : Chromium formate un `input type=number` avec la
+locale **du systeme**, pas avec le `lang` du document. Le telephone etant en
+francais, l'interface anglaise affichait une virgule alors que le code ecrivait
+bien `29.94` ; `.value` restait normalise, donc le calcul n'a jamais ete faux,
+c'etait un defaut d'affichage. Corrige en sortant les **deux champs decimaux**
+(QNH en inHg, marge de securite) de `type=number` vers
+`type=text inputmode=decimal` : un champ texte affiche exactement la chaine
+qu'on lui donne, et `inputmode=decimal` conserve le pave numerique sur mobile.
+Contrepartie assumee et traitee : c'est desormais a nous d'accepter la virgule
+qu'un pilote tapera sur un clavier francais, d'ou `parseNum()`, utilise par
+`numOrNull()` et par la relecture des champs dans `setUnits()`. Les autres
+champs restent en `type=number` : ils sont entiers, donc sans separateur
+decimal. Ne pas « restaurer » `type=number` sur ces deux champs.
 
 ### Test fermé validé — 20 août 2026
 
